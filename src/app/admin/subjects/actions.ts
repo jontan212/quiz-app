@@ -97,7 +97,7 @@ export async function renameTopic(id: string, newName: string): Promise<{ error?
 
   const oldName = topic.name
   const trimmed = newName.trim()
-  const subjectName = (topic.subjects as { name: string }).name
+  const subjectName = (topic.subjects as unknown as { name: string }[] )[0]?.name
 
   if (oldName === trimmed) return {}
 
@@ -163,7 +163,7 @@ export async function deleteTopic(id: string): Promise<{ error?: string }> {
     .single()
   if (!topic) return { error: 'Tema no encontrado.' }
 
-  const subjectName = (topic.subjects as { name: string }).name
+  const subjectName = (topic.subjects as unknown as { name: string }[])[0]?.name
 
   const { count } = await supabase
     .from('questions')
