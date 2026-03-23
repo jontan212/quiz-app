@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
+/* ── Theme tokens ─────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces (light) */
+  --surface-page:  #f9fafb;
+  --surface-card:  #ffffff;
+  --surface-input: #f3f4f6;
+  --surface-hover: #e5e7eb;
+  /* Borders (light) */
+  --wire:          #e5e7eb;
+  --wire-muted:    #d1d5db;
+  /* Text (light) */
+  --ink-strong:    #111827;
+  --ink:           #374151;
+  --ink-muted:     #4b5563;
+  --ink-faint:     #6b7280;
+  --ink-dim:       #9ca3af;
+  --ink-ghost:     #d1d5db;
+}
+
+.dark {
+  /* Surfaces (dark) */
+  --surface-page:  #030712;
+  --surface-card:  #111827;
+  --surface-input: #1f2937;
+  --surface-hover: #374151;
+  /* Borders (dark) */
+  --wire:          #1f2937;
+  --wire-muted:    #374151;
+  /* Text (dark) */
+  --ink-strong:    #f9fafb;
+  --ink:           #e5e7eb;
+  --ink-muted:     #d1d5db;
+  --ink-faint:     #9ca3af;
+  --ink-dim:       #6b7280;
+  --ink-ghost:     #4b5563;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-surface-page:  var(--surface-page);
+  --color-surface-card:  var(--surface-card);
+  --color-surface-input: var(--surface-input);
+  --color-surface-hover: var(--surface-hover);
+  --color-wire:          var(--wire);
+  --color-wire-muted:    var(--wire-muted);
+  --color-ink-strong:    var(--ink-strong);
+  --color-ink:           var(--ink);
+  --color-ink-muted:     var(--ink-muted);
+  --color-ink-faint:     var(--ink-faint);
+  --color-ink-dim:       var(--ink-dim);
+  --color-ink-ghost:     var(--ink-ghost);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: var(--surface-page);
+  color: var(--ink-strong);
   font-family: Arial, Helvetica, sans-serif;
 }
