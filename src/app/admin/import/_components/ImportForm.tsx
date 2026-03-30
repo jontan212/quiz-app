@@ -245,57 +245,55 @@ export default function ImportForm() {
 
           {/* Valid rows preview */}
           {validRows.length > 0 && (
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Vista previa</p>
-                <span className="text-xs text-gray-600">{validRows.length} preguntas</span>
-              </div>
-              <div className="divide-y divide-gray-800/60 max-h-96 overflow-y-auto">
-                {validRows.map((row, i) => (
-                  <div key={i} className="px-4 py-3 space-y-1.5">
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs text-gray-600 tabular-nums w-5 flex-shrink-0 mt-0.5">{i + 1}.</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs px-2 py-0.5 bg-gray-800 text-gray-400 rounded-full truncate max-w-[35%]">
-                            {row.subject}
+            <div className="divide-y divide-gray-800/60 pb-28">
+              {validRows.map((row, i) => (
+                <div key={i} className="py-3 space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs text-gray-600 tabular-nums w-5 flex-shrink-0 mt-0.5">{i + 1}.</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs px-2 py-0.5 bg-gray-800 text-gray-400 rounded-full truncate max-w-[35%]">
+                          {row.subject}
+                        </span>
+                        <span className="text-xs text-gray-600 truncate max-w-[35%]">{row.topic}</span>
+                      </div>
+                      <p className="text-sm text-white leading-snug">{row.statement}</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {row.options.map((opt, oi) => (
+                          <span
+                            key={oi}
+                            className={`text-xs px-2 py-1 rounded-lg ${
+                              oi === row.correctIndex
+                                ? 'bg-green-900/40 border border-green-700/50 text-green-300'
+                                : 'bg-gray-800 text-gray-400'
+                            }`}
+                          >
+                            {oi === row.correctIndex ? '✓ ' : ''}{opt}
                           </span>
-                          <span className="text-xs text-gray-600 truncate max-w-[35%]">{row.topic}</span>
-                        </div>
-                        <p className="text-sm text-white leading-snug">{row.statement}</p>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {row.options.map((opt, oi) => (
-                            <span
-                              key={oi}
-                              className={`text-xs px-2 py-1 rounded-lg ${
-                                oi === row.correctIndex
-                                  ? 'bg-green-900/40 border border-green-700/50 text-green-300'
-                                  : 'bg-gray-800 text-gray-400'
-                              }`}
-                            >
-                              {oi === row.correctIndex ? '✓ ' : ''}{opt}
-                            </span>
-                          ))}
-                        </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Import button */}
+          {/* Import button — fixed at bottom */}
           {validRows.length > 0 && (
-            <button
-              onClick={handleImport}
-              disabled={isPending}
-              className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-900/30 text-sm"
-            >
-              {isPending
-                ? 'Importando…'
-                : `Importar ${validRows.length} pregunta${validRows.length !== 1 ? 's' : ''}`}
-            </button>
+            <div className="fixed bottom-0 inset-x-0 z-50 p-4 bg-gray-950/95 border-t border-gray-800 backdrop-blur-sm">
+              <div className="max-w-4xl mx-auto">
+                <button
+                  onClick={handleImport}
+                  disabled={isPending}
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-900/30 text-sm"
+                >
+                  {isPending
+                    ? 'Importando…'
+                    : `Importar ${validRows.length} pregunta${validRows.length !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}
