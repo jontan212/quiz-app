@@ -73,3 +73,22 @@ export async function updateQuestion(
   revalidatePath(`/admin/questions/${id}/edit`)
   return {}
 }
+
+export async function deleteManyQuestions(ids: string[]): Promise<{ error?: string }> {
+  const auth = await requireAdmin()
+  if (auth !== true) return auth
+  if (ids.length === 0) return {}
+
+  const supabase = createAdminClient()
+  const { error: optsError } = await supabase
+    .from('question_options')
+    .delete()
+    .in('question_id', ids)
+  if (optsError) return { error: optsError.message }
+
+  const { error } = await supabase.from('questions').delete().in('id', ids)
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin/questions')
+  return {}
+}

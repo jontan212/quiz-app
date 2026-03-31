@@ -1,18 +1,28 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { importQuestions, checkDuplicateStatements, type ImportRow } from '../actions'
+import {
+  importQuestions,
+  checkDuplicateStatements,
+  checkDuplicateDetails,
+  type ImportRow,
+  type ExistingQuestion,
+} from '../actions'
+import DuplicateCompareModal, { type CompareQuestion } from '@/app/admin/_components/DuplicateCompareModal'
 
 const SAMPLE_CSV = `asignatura,tema,enunciado,opcion1,opcion2,opcion3,opcion4,correcta
 Ejemplo,Tema 1,¿Cuál es la capital de España?,Madrid,Barcelona,Sevilla,Valencia,1
 Ejemplo,Tema 1,¿Cuántos lados tiene un triángulo?,2,3,4,5,2
 Ejemplo,Tema 2,¿Qué gas respiramos principalmente?,Oxígeno,Nitrógeno,Dióxido de carbono,2`
 
+type DuplicateLevel = 'exact' | 'conflict' | null
+
 type PreviewRow = ImportRow & {
   id: string
   rowNumber?: number
   parseError?: string
-  isDuplicate: boolean
+  duplicateLevel: DuplicateLevel
+  existingMatches: ExistingQuestion[]
 }
 
 type DeleteBatch = PreviewRow[]
@@ -31,13 +41,14 @@ function parseCSV(text: string): PreviewRow[] {
 
     const cols = splitCSVLine(line)
     const rowNumber = li + 1
-
     const numCols = cols.length
+
     if (numCols < 6) {
       rows.push({
         id: uid(), rowNumber,
         subject: '', topic: '', statement: '',
-        options: [], correctIndex: 0, isDuplicate: false,
+        options: [], correctIndex: 0,
+        duplicateLevel: null, existingMatches: [],
         parseError: `Solo ${numCols} columnas (mínimo 6)`,
       })
       continue
@@ -53,7 +64,8 @@ function parseCSV(text: string): PreviewRow[] {
     if (!subject || !topic || !statement) {
       rows.push({
         id: uid(), rowNumber, subject, topic, statement,
-        options, correctIndex: 0, isDuplicate: false,
+        options, correctIndex: 0,
+        duplicateLevel: null, existingMatches: [],
         parseError: 'Asignatura, tema o enunciado vacío',
       })
       continue
@@ -63,7 +75,8 @@ function parseCSV(text: string): PreviewRow[] {
     if (isNaN(correctaNum) || correctaNum < 1 || correctaNum > options.length) {
       rows.push({
         id: uid(), rowNumber, subject, topic, statement, options,
-        correctIndex: 0, isDuplicate: false,
+        correctIndex: 0,
+        duplicateLevel: null, existingMatches: [],
         parseError: `Columna "correcta" inválida: "${correctaRaw}" (opciones: 1–${options.length})`,
       })
       continue
@@ -71,7 +84,8 @@ function parseCSV(text: string): PreviewRow[] {
 
     rows.push({
       id: uid(), rowNumber, subject, topic, statement, options,
-      correctIndex: correctaNum - 1, isDuplicate: false,
+      correctIndex: correctaNum - 1,
+      duplicateLevel: null, existingMatches: [],
     })
   }
 
@@ -97,6 +111,38 @@ function splitCSVLine(line: string): string[] {
   }
   result.push(current)
   return result
+}
+
+function rowToCompareQuestion(row: PreviewRow): CompareQuestion {
+  return {
+    statement: row.statement,
+    options: row.options.map((text, i) => ({ text, isCorrect: i === row.correctIndex })),
+  }
+}
+
+// ── Badge ──────────────────────────────────────────────────────
+function DupBadge({
+  level,
+  onClick,
+}: {
+  level: DuplicateLevel
+  onClick: (e: React.MouseEvent) => void
+}) {
+  if (!level) return null
+  const isExact = level === 'exact'
+  return (
+    <button
+      onClick={onClick}
+      title="Clic para comparar con la pregunta existente"
+      className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full border font-medium cursor-pointer transition-opacity hover:opacity-80 ${
+        isExact
+          ? 'bg-red-900/40 border-red-700/50 text-red-400'
+          : 'bg-orange-900/40 border-orange-700/50 text-orange-400'
+      }`}
+    >
+      {isExact ? 'Duplicado exacto' : 'Conflicto'}
+    </button>
+  )
 }
 
 export default function ImportForm() {
@@ -126,11 +172,16 @@ export default function ImportForm() {
   const [isCheckingNew, setIsCheckingNew] = useState(false)
   const [newIsDuplicate, setNewIsDuplicate] = useState(false)
 
+  // Comparison modal
+  const [compareRow, setCompareRow] = useState<PreviewRow | null>(null)
+
   // ── Derived ────────────────────────────────────────────────────
   const validRows = allRows.filter(r => !r.parseError)
   const invalidRows = allRows.filter(r => r.parseError)
-  const duplicateCount = validRows.filter(r => r.isDuplicate).length
-  const toImportCount = validRows.length - duplicateCount
+  const exactCount = validRows.filter(r => r.duplicateLevel === 'exact').length
+  const conflictCount = validRows.filter(r => r.duplicateLevel === 'conflict').length
+  const flaggedCount = exactCount + conflictCount
+  const toImportCount = validRows.length - flaggedCount
   const filteredValid = validRows.filter(r =>
     !searchQuery || r.statement.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -150,22 +201,30 @@ export default function ImportForm() {
     setEditingId(null)
     setEditDraft(null)
     setShowNewForm(false)
+    setCompareRow(null)
 
     const text = await file.text()
     const parsed = parseCSV(text)
     setAllRows(parsed)
     setHasLoaded(true)
 
-    const stmts = parsed.filter(r => !r.parseError).map(r => r.statement)
-    if (stmts.length > 0) {
+    const validParsed = parsed.filter(r => !r.parseError)
+    if (validParsed.length > 0) {
       setIsCheckingDuplicates(true)
-      const { duplicates } = await checkDuplicateStatements(stmts)
-      const dupSet = new Set(duplicates.map(d => d.toLowerCase()))
+      const { matches } = await checkDuplicateDetails(
+        validParsed.map(r => ({ statement: r.statement, options: r.options, correctIndex: r.correctIndex })),
+      )
+      // Build lookup: statementLower → match
+      const matchMap = new Map(matches.map(m => [m.statementLower, m]))
+
       setAllRows(prev =>
-        prev.map(r => ({
-          ...r,
-          isDuplicate: !r.parseError && dupSet.has(r.statement.toLowerCase()),
-        })),
+        prev.map(r => {
+          if (r.parseError) return r
+          const m = matchMap.get(r.statement.toLowerCase())
+          return m
+            ? { ...r, duplicateLevel: m.level, existingMatches: m.existing }
+            : { ...r, duplicateLevel: null, existingMatches: [] }
+        }),
       )
       setIsCheckingDuplicates(false)
     }
@@ -188,10 +247,10 @@ export default function ImportForm() {
     setSelected(new Set())
   }
 
-  function deleteAllDuplicates() {
-    const toDelete = allRows.filter(r => r.isDuplicate)
+  function deleteAllFlagged() {
+    const toDelete = allRows.filter(r => r.duplicateLevel !== null)
     if (toDelete.length === 0) return
-    setAllRows(prev => prev.filter(r => !r.isDuplicate))
+    setAllRows(prev => prev.filter(r => r.duplicateLevel === null))
     setSelected(prev => {
       const s = new Set(prev)
       toDelete.forEach(r => s.delete(r.id))
@@ -301,7 +360,8 @@ export default function ImportForm() {
       statement: trimStmt,
       options: opts,
       correctIndex: newCorrect,
-      isDuplicate: newIsDuplicate,
+      duplicateLevel: newIsDuplicate ? 'conflict' : null,
+      existingMatches: [],
     }
     setAllRows(prev => [...prev, newRow])
     setShowNewForm(false)
@@ -326,6 +386,7 @@ export default function ImportForm() {
         setFileName('')
         setSelected(new Set())
         setUndoStack([])
+        setCompareRow(null)
       }
     })
   }
@@ -424,12 +485,19 @@ export default function ImportForm() {
               <span className="text-white font-semibold">{validRows.length}</span> totales
               {isCheckingDuplicates
                 ? <span className="text-gray-500"> · comprobando duplicados…</span>
-                : duplicateCount > 0 && (
-                  <> · <span className="text-amber-400 font-semibold">{duplicateCount}</span> duplicadas</>
+                : (
+                  <>
+                    {exactCount > 0 && (
+                      <> · <span className="text-red-400 font-semibold">{exactCount}</span> exactos</>
+                    )}
+                    {conflictCount > 0 && (
+                      <> · <span className="text-orange-400 font-semibold">{conflictCount}</span> conflictos</>
+                    )}
+                  </>
                 )
               }
               {invalidRows.length > 0 && (
-                <> · <span className="text-red-400 font-semibold">{invalidRows.length}</span> con error</>
+                <> · <span className="text-gray-500 font-semibold">{invalidRows.length}</span> con error</>
               )}
               {' · '}
               <span className="text-blue-400 font-semibold">{toImportCount}</span> a importar
@@ -581,12 +649,12 @@ export default function ImportForm() {
                   Eliminar {selected.size} sel.
                 </button>
               )}
-              {duplicateCount > 0 && (
+              {flaggedCount > 0 && (
                 <button
-                  onClick={deleteAllDuplicates}
-                  className="px-3 py-2 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-800/50 text-amber-400 text-sm rounded-lg transition-colors whitespace-nowrap"
+                  onClick={deleteAllFlagged}
+                  className="px-3 py-2 bg-orange-900/30 hover:bg-orange-900/50 border border-orange-800/50 text-orange-400 text-sm rounded-lg transition-colors whitespace-nowrap"
                 >
-                  Eliminar duplicadas ({duplicateCount})
+                  Eliminar duplicadas ({flaggedCount})
                 </button>
               )}
               {undoStack.length > 0 && (
@@ -704,11 +772,10 @@ export default function ImportForm() {
                             {row.subject}
                           </span>
                           <span className="text-xs text-gray-600 truncate max-w-[35%]">{row.topic}</span>
-                          {row.isDuplicate && (
-                            <span className="text-xs px-2 py-0.5 bg-amber-900/40 border border-amber-700/50 text-amber-400 rounded-full font-medium">
-                              Duplicada
-                            </span>
-                          )}
+                          <DupBadge
+                            level={row.duplicateLevel}
+                            onClick={e => { e.stopPropagation(); setCompareRow(row) }}
+                          />
                         </div>
                         <p className="text-sm text-white leading-snug">{row.statement}</p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -782,6 +849,20 @@ export default function ImportForm() {
         <p className="text-center text-gray-500 text-sm py-4">
           El archivo no contiene filas de datos (solo cabecera o vacío).
         </p>
+      )}
+
+      {/* Comparison modal */}
+      {compareRow && compareRow.existingMatches.length > 0 && compareRow.duplicateLevel && (
+        <DuplicateCompareModal
+          level={compareRow.duplicateLevel}
+          incomingLabel="En el CSV"
+          incoming={rowToCompareQuestion(compareRow)}
+          existing={compareRow.existingMatches.map(m => ({
+            statement: m.statement,
+            options: m.options,
+          }))}
+          onClose={() => setCompareRow(null)}
+        />
       )}
     </div>
   )

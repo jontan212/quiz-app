@@ -89,6 +89,7 @@ export async function importQuestions(
   return { imported, errors }
 }
 
+// Kept for the "add question manually" onBlur check (statement-only)
 export async function checkDuplicateStatements(
   statements: string[],
 ): Promise<{ duplicates: string[]; error?: string }> {
@@ -108,4 +109,102 @@ export async function checkDuplicateStatements(
   const duplicates = statements.filter((s) => existingLower.has(s.toLowerCase()))
 
   return { duplicates }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Two-level duplicate check: exact vs conflict
+// ─────────────────────────────────────────────────────────────
+
+export type ExistingQuestion = {
+  id: string
+  statement: string
+  options: Array<{ text: string; isCorrect: boolean }>
+}
+
+export type DuplicateMatch = {
+  statementLower: string
+  level: 'exact' | 'conflict'
+  existing: ExistingQuestion[]
+}
+
+type DbOption = { text: string | null; is_correct: boolean; position: number }
+type DbQuestion = { id: string; statement: string; question_options: DbOption[] }
+
+function sortedTexts(texts: string[]): string {
+  return texts.map(t => t.trim().toLowerCase()).sort().join('\0')
+}
+
+function optsKey(opts: DbOption[]): string {
+  return sortedTexts(opts.map(o => o.text ?? ''))
+}
+
+function correctKey(opts: DbOption[]): string {
+  return sortedTexts(opts.filter(o => o.is_correct).map(o => o.text ?? ''))
+}
+
+function incomingOptsKey(options: string[]): string {
+  return sortedTexts(options)
+}
+
+function incomingCorrectKey(options: string[], correctIndex: number): string {
+  return (options[correctIndex] ?? '').trim().toLowerCase()
+}
+
+export async function checkDuplicateDetails(
+  incoming: Array<{ statement: string; options: string[]; correctIndex: number }>,
+): Promise<{ matches: DuplicateMatch[]; error?: string }> {
+  const cookieStore = await cookies()
+  if (cookieStore.get('admin_session')?.value !== 'true') {
+    return { matches: [], error: 'No autorizado' }
+  }
+  if (incoming.length === 0) return { matches: [] }
+
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('questions')
+    .select('id, statement, question_options(text, is_correct, position)')
+
+  if (error) return { matches: [], error: error.message }
+
+  // Group existing by lowercased statement
+  const byStmt = new Map<string, DbQuestion[]>()
+  for (const q of (data ?? []) as DbQuestion[]) {
+    const key = q.statement.toLowerCase()
+    const arr = byStmt.get(key) ?? []
+    arr.push(q)
+    byStmt.set(key, arr)
+  }
+
+  const results: DuplicateMatch[] = []
+
+  for (const row of incoming) {
+    const key = row.statement.toLowerCase()
+    const matches = byStmt.get(key)
+    if (!matches || matches.length === 0) continue
+
+    const iKey = incomingOptsKey(row.options)
+    const iCorrect = incomingCorrectKey(row.options, row.correctIndex)
+
+    // Worst level across all matches (conflict beats exact)
+    let level: 'exact' | 'conflict' = 'exact'
+    for (const m of matches) {
+      const eKey = optsKey(m.question_options)
+      const eCorrect = correctKey(m.question_options)
+      if (iKey !== eKey || iCorrect !== eCorrect) { level = 'conflict'; break }
+    }
+
+    results.push({
+      statementLower: key,
+      level,
+      existing: matches.map(m => ({
+        id: m.id,
+        statement: m.statement,
+        options: [...m.question_options]
+          .sort((a, b) => a.position - b.position)
+          .map(o => ({ text: o.text ?? '', isCorrect: o.is_correct })),
+      })),
+    })
+  }
+
+  return { matches: results }
 }
