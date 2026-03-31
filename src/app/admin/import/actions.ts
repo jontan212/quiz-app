@@ -88,3 +88,24 @@ export async function importQuestions(
 
   return { imported, errors }
 }
+
+export async function checkDuplicateStatements(
+  statements: string[],
+): Promise<{ duplicates: string[]; error?: string }> {
+  const cookieStore = await cookies()
+  if (cookieStore.get('admin_session')?.value !== 'true') {
+    return { duplicates: [], error: 'No autorizado' }
+  }
+
+  if (statements.length === 0) return { duplicates: [] }
+
+  const supabase = createAdminClient()
+  const { data, error } = await supabase.from('questions').select('statement')
+
+  if (error) return { duplicates: [], error: error.message }
+
+  const existingLower = new Set((data ?? []).map((q) => q.statement.toLowerCase()))
+  const duplicates = statements.filter((s) => existingLower.has(s.toLowerCase()))
+
+  return { duplicates }
+}

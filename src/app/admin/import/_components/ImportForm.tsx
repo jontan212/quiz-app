@@ -1,36 +1,43 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { importQuestions, type ImportRow } from '../actions'
+import { importQuestions, checkDuplicateStatements, type ImportRow } from '../actions'
 
 const SAMPLE_CSV = `asignatura,tema,enunciado,opcion1,opcion2,opcion3,opcion4,correcta
 Ejemplo,Tema 1,¿Cuál es la capital de España?,Madrid,Barcelona,Sevilla,Valencia,1
 Ejemplo,Tema 1,¿Cuántos lados tiene un triángulo?,2,3,4,5,2
 Ejemplo,Tema 2,¿Qué gas respiramos principalmente?,Oxígeno,Nitrógeno,Dióxido de carbono,2`
 
-type ParsedRow = ImportRow & { rowNumber: number; parseError?: string }
+type PreviewRow = ImportRow & {
+  id: string
+  rowNumber?: number
+  parseError?: string
+  isDuplicate: boolean
+}
 
-type Result = { imported: number; errors: number }
+type DeleteBatch = PreviewRow[]
 
-function parseCSV(text: string): ParsedRow[] {
+function uid() {
+  return Math.random().toString(36).slice(2, 10)
+}
+
+function parseCSV(text: string): PreviewRow[] {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
-  const rows: ParsedRow[] = []
+  const rows: PreviewRow[] = []
 
-  // Skip header (first line) and empty lines
   for (let li = 1; li < lines.length; li++) {
     const line = lines[li].trim()
     if (!line) continue
 
     const cols = splitCSVLine(line)
-    const rowNumber = li + 1 // 1-based, counting header as row 1
+    const rowNumber = li + 1
 
-    // Determine column count: 6 = 2 opts, 7 = 3 opts, 8 = 4 opts
     const numCols = cols.length
     if (numCols < 6) {
       rows.push({
-        rowNumber,
+        id: uid(), rowNumber,
         subject: '', topic: '', statement: '',
-        options: [], correctIndex: 0,
+        options: [], correctIndex: 0, isDuplicate: false,
         parseError: `Solo ${numCols} columnas (mínimo 6)`,
       })
       continue
@@ -45,8 +52,8 @@ function parseCSV(text: string): ParsedRow[] {
 
     if (!subject || !topic || !statement) {
       rows.push({
-        rowNumber, subject, topic, statement,
-        options, correctIndex: 0,
+        id: uid(), rowNumber, subject, topic, statement,
+        options, correctIndex: 0, isDuplicate: false,
         parseError: 'Asignatura, tema o enunciado vacío',
       })
       continue
@@ -55,14 +62,17 @@ function parseCSV(text: string): ParsedRow[] {
     const correctaNum = parseInt(correctaRaw, 10)
     if (isNaN(correctaNum) || correctaNum < 1 || correctaNum > options.length) {
       rows.push({
-        rowNumber, subject, topic, statement, options,
-        correctIndex: 0,
+        id: uid(), rowNumber, subject, topic, statement, options,
+        correctIndex: 0, isDuplicate: false,
         parseError: `Columna "correcta" inválida: "${correctaRaw}" (opciones: 1–${options.length})`,
       })
       continue
     }
 
-    rows.push({ rowNumber, subject, topic, statement, options, correctIndex: correctaNum - 1 })
+    rows.push({
+      id: uid(), rowNumber, subject, topic, statement, options,
+      correctIndex: correctaNum - 1, isDuplicate: false,
+    })
   }
 
   return rows
@@ -90,30 +100,215 @@ function splitCSVLine(line: string): string[] {
 }
 
 export default function ImportForm() {
-  const [rows, setRows] = useState<ParsedRow[] | null>(null)
+  const [allRows, setAllRows] = useState<PreviewRow[]>([])
+  const [hasLoaded, setHasLoaded] = useState(false)
   const [fileName, setFileName] = useState('')
-  const [result, setResult] = useState<Result | null>(null)
+  const [result, setResult] = useState<{ imported: number; errors: number } | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const validRows = rows?.filter(r => !r.parseError) ?? []
-  const invalidRows = rows?.filter(r => r.parseError) ?? []
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
+  const [undoStack, setUndoStack] = useState<DeleteBatch[]>([])
 
-  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  // Inline editing
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editDraft, setEditDraft] = useState<PreviewRow | null>(null)
+
+  // New row form
+  const [showNewForm, setShowNewForm] = useState(false)
+  const [newStmt, setNewStmt] = useState('')
+  const [newOpts, setNewOpts] = useState(['', ''])
+  const [newCorrect, setNewCorrect] = useState(0)
+  const [newSubject, setNewSubject] = useState('')
+  const [newTopic, setNewTopic] = useState('')
+  const [isCheckingNew, setIsCheckingNew] = useState(false)
+  const [newIsDuplicate, setNewIsDuplicate] = useState(false)
+
+  // ── Derived ────────────────────────────────────────────────────
+  const validRows = allRows.filter(r => !r.parseError)
+  const invalidRows = allRows.filter(r => r.parseError)
+  const duplicateCount = validRows.filter(r => r.isDuplicate).length
+  const toImportCount = validRows.length - duplicateCount
+  const filteredValid = validRows.filter(r =>
+    !searchQuery || r.statement.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+  const allFilteredSelected =
+    filteredValid.length > 0 && filteredValid.every(r => selected.has(r.id))
+
+  // ── File loading ───────────────────────────────────────────────
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setFileName(file.name)
     setResult(null)
     setImportError(null)
+    setSelected(new Set())
+    setUndoStack([])
+    setSearchQuery('')
+    setEditingId(null)
+    setEditDraft(null)
+    setShowNewForm(false)
 
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string
-      setRows(parseCSV(text))
+    const text = await file.text()
+    const parsed = parseCSV(text)
+    setAllRows(parsed)
+    setHasLoaded(true)
+
+    const stmts = parsed.filter(r => !r.parseError).map(r => r.statement)
+    if (stmts.length > 0) {
+      setIsCheckingDuplicates(true)
+      const { duplicates } = await checkDuplicateStatements(stmts)
+      const dupSet = new Set(duplicates.map(d => d.toLowerCase()))
+      setAllRows(prev =>
+        prev.map(r => ({
+          ...r,
+          isDuplicate: !r.parseError && dupSet.has(r.statement.toLowerCase()),
+        })),
+      )
+      setIsCheckingDuplicates(false)
     }
-    reader.readAsText(file, 'utf-8')
   }
 
+  // ── Delete ─────────────────────────────────────────────────────
+  function deleteRow(id: string) {
+    const row = allRows.find(r => r.id === id)
+    if (!row) return
+    setAllRows(prev => prev.filter(r => r.id !== id))
+    setSelected(prev => { const s = new Set(prev); s.delete(id); return s })
+    setUndoStack(prev => [...prev.slice(-9), [row]])
+  }
+
+  function deleteSelected() {
+    const toDelete = allRows.filter(r => selected.has(r.id))
+    if (toDelete.length === 0) return
+    setAllRows(prev => prev.filter(r => !selected.has(r.id)))
+    setUndoStack(prev => [...prev.slice(-9), toDelete])
+    setSelected(new Set())
+  }
+
+  function deleteAllDuplicates() {
+    const toDelete = allRows.filter(r => r.isDuplicate)
+    if (toDelete.length === 0) return
+    setAllRows(prev => prev.filter(r => !r.isDuplicate))
+    setSelected(prev => {
+      const s = new Set(prev)
+      toDelete.forEach(r => s.delete(r.id))
+      return s
+    })
+    setUndoStack(prev => [...prev.slice(-9), toDelete])
+  }
+
+  function undo() {
+    const batch = undoStack[undoStack.length - 1]
+    if (!batch) return
+    setAllRows(prev => [...prev, ...batch])
+    setUndoStack(prev => prev.slice(0, -1))
+  }
+
+  // ── Selection ──────────────────────────────────────────────────
+  function toggleSelect(id: string) {
+    setSelected(prev => {
+      const s = new Set(prev)
+      s.has(id) ? s.delete(id) : s.add(id)
+      return s
+    })
+  }
+
+  function toggleSelectAll() {
+    if (allFilteredSelected) {
+      setSelected(prev => {
+        const s = new Set(prev)
+        filteredValid.forEach(r => s.delete(r.id))
+        return s
+      })
+    } else {
+      setSelected(prev => {
+        const s = new Set(prev)
+        filteredValid.forEach(r => s.add(r.id))
+        return s
+      })
+    }
+  }
+
+  // ── Inline editing ─────────────────────────────────────────────
+  function startEdit(row: PreviewRow) {
+    setEditingId(row.id)
+    setEditDraft({ ...row, options: [...row.options] })
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditDraft(null)
+  }
+
+  function saveEdit() {
+    if (!editDraft) return
+    setAllRows(prev => prev.map(r => (r.id === editDraft.id ? editDraft : r)))
+    setEditingId(null)
+    setEditDraft(null)
+  }
+
+  function updateDraftOption(i: number, value: string) {
+    if (!editDraft) return
+    const opts = [...editDraft.options]
+    opts[i] = value
+    setEditDraft({ ...editDraft, options: opts })
+  }
+
+  function addDraftOption() {
+    if (!editDraft) return
+    setEditDraft({ ...editDraft, options: [...editDraft.options, ''] })
+  }
+
+  function removeDraftOption(i: number) {
+    if (!editDraft || editDraft.options.length <= 2) return
+    const opts = editDraft.options.filter((_, idx) => idx !== i)
+    const newCorrectIndex =
+      editDraft.correctIndex >= i
+        ? Math.max(0, editDraft.correctIndex - 1)
+        : editDraft.correctIndex
+    setEditDraft({ ...editDraft, options: opts, correctIndex: newCorrectIndex })
+  }
+
+  // ── New row form ───────────────────────────────────────────────
+  function resetNewForm() {
+    setNewStmt(''); setNewOpts(['', '']); setNewCorrect(0)
+    setNewSubject(''); setNewTopic('')
+    setNewIsDuplicate(false); setIsCheckingNew(false)
+  }
+
+  async function handleNewStmtBlur() {
+    if (!newStmt.trim()) return
+    setIsCheckingNew(true)
+    const { duplicates } = await checkDuplicateStatements([newStmt.trim()])
+    setNewIsDuplicate(duplicates.length > 0)
+    setIsCheckingNew(false)
+  }
+
+  function confirmNewRow() {
+    const trimStmt = newStmt.trim()
+    const trimSubject = newSubject.trim()
+    const trimTopic = newTopic.trim()
+    const opts = newOpts.map(o => o.trim()).filter(Boolean)
+    if (!trimStmt || !trimSubject || !trimTopic || opts.length < 2 || newCorrect >= opts.length) return
+
+    const newRow: PreviewRow = {
+      id: uid(),
+      subject: trimSubject,
+      topic: trimTopic,
+      statement: trimStmt,
+      options: opts,
+      correctIndex: newCorrect,
+      isDuplicate: newIsDuplicate,
+    }
+    setAllRows(prev => [...prev, newRow])
+    setShowNewForm(false)
+    resetNewForm()
+  }
+
+  // ── Import ─────────────────────────────────────────────────────
   function handleImport() {
     if (validRows.length === 0) return
     startTransition(async () => {
@@ -126,12 +321,16 @@ export default function ImportForm() {
         setImportError(res.error)
       } else {
         setResult(res)
-        setRows(null)
+        setAllRows([])
+        setHasLoaded(false)
         setFileName('')
+        setSelected(new Set())
+        setUndoStack([])
       }
     })
   }
 
+  // ── Render ─────────────────────────────────────────────────────
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
@@ -216,26 +415,147 @@ export default function ImportForm() {
       )}
 
       {/* Preview */}
-      {rows && rows.length > 0 && (
+      {hasLoaded && (
         <div className="space-y-4">
 
-          {/* Stats */}
-          <div className="flex items-center gap-3">
+          {/* Summary bar */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <span className="text-sm text-gray-400">
-              <span className="text-white font-semibold">{rows.length}</span> filas detectadas —
-              <span className="text-green-400 font-semibold"> {validRows.length}</span> válidas
+              <span className="text-white font-semibold">{validRows.length}</span> totales
+              {isCheckingDuplicates
+                ? <span className="text-gray-500"> · comprobando duplicados…</span>
+                : duplicateCount > 0 && (
+                  <> · <span className="text-amber-400 font-semibold">{duplicateCount}</span> duplicadas</>
+                )
+              }
               {invalidRows.length > 0 && (
-                <>, <span className="text-red-400 font-semibold">{invalidRows.length}</span> con error</>
+                <> · <span className="text-red-400 font-semibold">{invalidRows.length}</span> con error</>
               )}
+              {' · '}
+              <span className="text-blue-400 font-semibold">{toImportCount}</span> a importar
             </span>
+            <button
+              onClick={() => { setShowNewForm(v => !v); if (showNewForm) resetNewForm() }}
+              className="text-sm px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/40 text-blue-400 rounded-lg transition-colors font-medium"
+            >
+              + Añadir pregunta
+            </button>
           </div>
+
+          {/* New row form */}
+          {showNewForm && (
+            <div className="bg-gray-900 border border-blue-800/50 rounded-xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Nueva pregunta</p>
+
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Asignatura"
+                  value={newSubject}
+                  onChange={e => setNewSubject(e.target.value)}
+                  className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  placeholder="Tema"
+                  value={newTopic}
+                  onChange={e => setNewTopic(e.target.value)}
+                  className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <textarea
+                  placeholder="Enunciado de la pregunta…"
+                  value={newStmt}
+                  onChange={e => { setNewStmt(e.target.value); setNewIsDuplicate(false) }}
+                  onBlur={handleNewStmtBlur}
+                  rows={2}
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                />
+                {isCheckingNew && <p className="text-xs text-gray-500 mt-1">Comprobando duplicado…</p>}
+                {!isCheckingNew && newIsDuplicate && (
+                  <p className="text-xs text-amber-400 mt-1">
+                    ⚠ Ya existe una pregunta con este enunciado.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                {newOpts.map((opt, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                      newCorrect === i ? 'bg-green-950/40 border-green-800' : 'bg-gray-800 border-gray-700'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="new-correct"
+                      checked={newCorrect === i}
+                      onChange={() => setNewCorrect(i)}
+                      className="accent-green-500 flex-shrink-0"
+                    />
+                    <input
+                      type="text"
+                      placeholder={`Opción ${i + 1}`}
+                      value={opt}
+                      onChange={e => {
+                        const o = [...newOpts]
+                        o[i] = e.target.value
+                        setNewOpts(o)
+                      }}
+                      className="flex-1 bg-transparent text-white text-sm placeholder-gray-500 focus:outline-none"
+                    />
+                    {newOpts.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const o = newOpts.filter((_, idx) => idx !== i)
+                          setNewOpts(o)
+                          if (newCorrect >= i && newCorrect > 0) setNewCorrect(newCorrect - 1)
+                        }}
+                        className="text-gray-600 hover:text-red-400 text-lg leading-none"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setNewOpts(o => [...o, ''])}
+                  className="text-xs text-blue-400 hover:text-blue-300"
+                >
+                  + Añadir opción
+                </button>
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => { setShowNewForm(false); resetNewForm() }}
+                  className="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmNewRow}
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  Añadir
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Invalid rows */}
           {invalidRows.length > 0 && (
             <div className="bg-red-950/30 border border-red-800/50 rounded-xl p-4 space-y-2">
               <p className="text-xs font-semibold text-red-400 uppercase tracking-wide">Filas con error (se omitirán)</p>
               {invalidRows.map(r => (
-                <div key={r.rowNumber} className="text-xs text-red-300 flex gap-2">
+                <div key={r.id} className="text-xs text-red-300 flex gap-2">
                   <span className="text-red-500 font-mono flex-shrink-0">Fila {r.rowNumber}:</span>
                   <span>{r.parseError}</span>
                 </div>
@@ -243,40 +563,200 @@ export default function ImportForm() {
             </div>
           )}
 
-          {/* Valid rows preview */}
+          {/* Toolbar */}
           {validRows.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                type="text"
+                placeholder="Buscar por enunciado…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="flex-1 min-w-[200px] px-3 py-2 bg-gray-900 border border-gray-800 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              {selected.size > 0 && (
+                <button
+                  onClick={deleteSelected}
+                  className="px-3 py-2 bg-red-900/40 hover:bg-red-900/60 border border-red-800/50 text-red-400 text-sm rounded-lg transition-colors whitespace-nowrap"
+                >
+                  Eliminar {selected.size} sel.
+                </button>
+              )}
+              {duplicateCount > 0 && (
+                <button
+                  onClick={deleteAllDuplicates}
+                  className="px-3 py-2 bg-amber-900/30 hover:bg-amber-900/50 border border-amber-800/50 text-amber-400 text-sm rounded-lg transition-colors whitespace-nowrap"
+                >
+                  Eliminar duplicadas ({duplicateCount})
+                </button>
+              )}
+              {undoStack.length > 0 && (
+                <button
+                  onClick={undo}
+                  className="px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm rounded-lg transition-colors whitespace-nowrap"
+                >
+                  ↩ Deshacer
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Valid rows list */}
+          {filteredValid.length > 0 && (
             <div className="divide-y divide-gray-800/60 pb-28">
-              {validRows.map((row, i) => (
-                <div key={i} className="py-3 space-y-1.5">
-                  <div className="flex items-start gap-2">
-                    <span className="text-xs text-gray-600 tabular-nums w-5 flex-shrink-0 mt-0.5">{i + 1}.</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs px-2 py-0.5 bg-gray-800 text-gray-400 rounded-full truncate max-w-[35%]">
-                          {row.subject}
-                        </span>
-                        <span className="text-xs text-gray-600 truncate max-w-[35%]">{row.topic}</span>
-                      </div>
-                      <p className="text-sm text-white leading-snug">{row.statement}</p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {row.options.map((opt, oi) => (
-                          <span
+              {/* Select-all row */}
+              <div className="py-2 flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={allFilteredSelected}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 accent-blue-500 cursor-pointer flex-shrink-0"
+                />
+                <span className="text-xs text-gray-500">
+                  {selected.size > 0
+                    ? `${selected.size} seleccionada${selected.size !== 1 ? 's' : ''}`
+                    : 'Seleccionar todo'}
+                </span>
+              </div>
+
+              {filteredValid.map((row, i) => (
+                <div key={row.id} className="py-3">
+                  {editingId === row.id && editDraft ? (
+                    /* Edit mode */
+                    <div className="space-y-3 bg-gray-900 border border-blue-800/50 rounded-xl p-4">
+                      <textarea
+                        value={editDraft.statement}
+                        onChange={e => setEditDraft({ ...editDraft, statement: e.target.value })}
+                        rows={2}
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                      />
+                      <div className="space-y-1.5">
+                        {editDraft.options.map((opt, oi) => (
+                          <div
                             key={oi}
-                            className={`text-xs px-2 py-1 rounded-lg ${
-                              oi === row.correctIndex
-                                ? 'bg-green-900/40 border border-green-700/50 text-green-300'
-                                : 'bg-gray-800 text-gray-400'
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                              editDraft.correctIndex === oi
+                                ? 'bg-green-950/40 border-green-800'
+                                : 'bg-gray-800 border-gray-700'
                             }`}
                           >
-                            {oi === row.correctIndex ? '✓ ' : ''}{opt}
-                          </span>
+                            <input
+                              type="radio"
+                              name={`edit-correct-${row.id}`}
+                              checked={editDraft.correctIndex === oi}
+                              onChange={() => setEditDraft({ ...editDraft, correctIndex: oi })}
+                              className="accent-green-500 flex-shrink-0"
+                            />
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={e => updateDraftOption(oi, e.target.value)}
+                              className="flex-1 bg-transparent text-white text-sm focus:outline-none"
+                            />
+                            {editDraft.options.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => removeDraftOption(oi)}
+                                className="text-gray-600 hover:text-red-400 text-lg leading-none"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
                         ))}
+                        <button
+                          type="button"
+                          onClick={addDraftOption}
+                          className="text-xs text-blue-400 hover:text-blue-300"
+                        >
+                          + Añadir opción
+                        </button>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={cancelEdit}
+                          className="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={saveEdit}
+                          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          Guardar
+                        </button>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* View mode */
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(row.id)}
+                        onChange={() => toggleSelect(row.id)}
+                        className="w-4 h-4 accent-blue-500 cursor-pointer flex-shrink-0 mt-1"
+                      />
+                      <span className="text-xs text-gray-600 tabular-nums w-5 flex-shrink-0 mt-1">
+                        {i + 1}.
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-xs px-2 py-0.5 bg-gray-800 text-gray-400 rounded-full truncate max-w-[35%]">
+                            {row.subject}
+                          </span>
+                          <span className="text-xs text-gray-600 truncate max-w-[35%]">{row.topic}</span>
+                          {row.isDuplicate && (
+                            <span className="text-xs px-2 py-0.5 bg-amber-900/40 border border-amber-700/50 text-amber-400 rounded-full font-medium">
+                              Duplicada
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-white leading-snug">{row.statement}</p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {row.options.map((opt, oi) => (
+                            <span
+                              key={oi}
+                              className={`text-xs px-2 py-1 rounded-lg ${
+                                oi === row.correctIndex
+                                  ? 'bg-green-900/40 border border-green-700/50 text-green-300'
+                                  : 'bg-gray-800 text-gray-400'
+                              }`}
+                            >
+                              {oi === row.correctIndex ? '✓ ' : ''}{opt}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => startEdit(row)}
+                          title="Editar"
+                          className="p-1.5 text-gray-500 hover:text-blue-400 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => deleteRow(row.id)}
+                          title="Eliminar"
+                          className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+          )}
+
+          {filteredValid.length === 0 && validRows.length > 0 && searchQuery && (
+            <p className="text-center text-gray-500 text-sm py-4">
+              No hay preguntas que coincidan con la búsqueda.
+            </p>
           )}
 
           {/* Import button — fixed at bottom */}
@@ -298,7 +778,7 @@ export default function ImportForm() {
         </div>
       )}
 
-      {rows && rows.length === 0 && (
+      {hasLoaded && allRows.length === 0 && (
         <p className="text-center text-gray-500 text-sm py-4">
           El archivo no contiene filas de datos (solo cabecera o vacío).
         </p>

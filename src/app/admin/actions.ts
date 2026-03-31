@@ -72,3 +72,27 @@ export async function createQuestion(
 
   return {}
 }
+
+// ============================================================
+// Comprobar duplicado de enunciado
+// ============================================================
+
+export async function checkStatementDuplicate(
+  statement: string,
+): Promise<{ isDuplicate: boolean; error?: string }> {
+  const cookieStore = await cookies()
+  if (cookieStore.get('admin_session')?.value !== 'true') {
+    return { isDuplicate: false, error: 'No autorizado' }
+  }
+
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('questions')
+    .select('id')
+    .ilike('statement', statement.trim())
+    .limit(1)
+
+  if (error) return { isDuplicate: false, error: error.message }
+
+  return { isDuplicate: (data?.length ?? 0) > 0 }
+}

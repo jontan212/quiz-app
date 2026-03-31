@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createQuestion } from '../actions'
+import { createQuestion, checkStatementDuplicate } from '../actions'
 import { uploadQuestionImage } from '@/lib/supabase/storage'
 import ImagePicker from './ImagePicker'
 import type { Subject, Topic } from '@/lib/types'
@@ -35,6 +35,8 @@ export default function QuestionForm({ subjects, topics }: Props) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [duplicateWarning, setDuplicateWarning] = useState(false)
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false)
 
   // ── Option helpers ─────────────────────────────────────────
 
@@ -58,6 +60,14 @@ export default function QuestionForm({ subjects, topics }: Props) {
   function handleSubjectChange(name: string) {
     setSubject(name)
     setTopic('')
+  }
+
+  async function handleStatementBlur() {
+    if (!statement.trim()) return
+    setIsCheckingDuplicate(true)
+    const { isDuplicate } = await checkStatementDuplicate(statement)
+    setDuplicateWarning(isDuplicate)
+    setIsCheckingDuplicate(false)
   }
 
   function resetForm() {
@@ -165,11 +175,20 @@ export default function QuestionForm({ subjects, topics }: Props) {
             </label>
             <textarea
               value={statement}
-              onChange={e => setStatement(e.target.value)}
+              onChange={e => { setStatement(e.target.value); setDuplicateWarning(false) }}
+              onBlur={handleStatementBlur}
               rows={3}
               className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="Escribe el enunciado de la pregunta…"
             />
+            {isCheckingDuplicate && (
+              <p className="mt-1.5 text-xs text-gray-500">Comprobando duplicado…</p>
+            )}
+            {!isCheckingDuplicate && duplicateWarning && (
+              <p className="mt-1.5 text-xs text-amber-400">
+                ⚠ Ya existe una pregunta con este enunciado.
+              </p>
+            )}
           </div>
 
           {/* Asignatura + Tema */}
