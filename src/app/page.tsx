@@ -7,6 +7,7 @@ export default async function HomePage() {
   const { data } = await supabase
     .from('questions')
     .select('subject, topic')
+    .limit(10000)
 
   // Construir mapa subject -> topics (deduplicado, ordenado)
   const map: Record<string, Set<string>> = {}
