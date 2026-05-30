@@ -31,15 +31,23 @@ function uid() {
   return Math.random().toString(36).slice(2, 10)
 }
 
+function detectSeparator(headerLine: string): ',' | ';' {
+  const commas = (headerLine.match(/,/g) ?? []).length
+  const semicolons = (headerLine.match(/;/g) ?? []).length
+  return semicolons > commas ? ';' : ','
+}
+
 function parseCSV(text: string): PreviewRow[] {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
   const rows: PreviewRow[] = []
+
+  const sep = detectSeparator(lines[0] ?? '')
 
   for (let li = 1; li < lines.length; li++) {
     const line = lines[li].trim()
     if (!line) continue
 
-    const cols = splitCSVLine(line)
+    const cols = splitCSVLine(line, sep)
     const rowNumber = li + 1
     const numCols = cols.length
 
@@ -92,7 +100,7 @@ function parseCSV(text: string): PreviewRow[] {
   return rows
 }
 
-function splitCSVLine(line: string): string[] {
+function splitCSVLine(line: string, sep: ',' | ';'): string[] {
   const result: string[] = []
   let current = ''
   let inQuotes = false
@@ -102,7 +110,7 @@ function splitCSVLine(line: string): string[] {
     if (ch === '"') {
       if (inQuotes && line[i + 1] === '"') { current += '"'; i++ }
       else inQuotes = !inQuotes
-    } else if (ch === ',' && !inQuotes) {
+    } else if (ch === sep && !inQuotes) {
       result.push(current)
       current = ''
     } else {
