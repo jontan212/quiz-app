@@ -1,6 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export type ImportRow = {
@@ -86,6 +87,7 @@ export async function importQuestions(
     imported++
   }
 
+  revalidatePath('/')
   return { imported, errors }
 }
 

@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import TestSetup from './_components/TestSetup'
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const supabase = createAdminClient()
 
