@@ -31,9 +31,9 @@ export default async function ResultsPage({
 
   if (!subject || total <= 0 || isNaN(correct) || correct < 0 || correct > total) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-surface-page flex items-center justify-center px-4">
         <div className="text-center space-y-4">
-          <p className="text-gray-300">Resultado inválido o sesión expirada.</p>
+          <p className="text-ink-muted">Resultado inválido o sesión expirada.</p>
           <a
             href="/"
             className="inline-block px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-colors text-sm"

@@ -404,11 +404,11 @@ export default function ImportForm() {
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
 
       {/* Sample download */}
-      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
+      <div className="bg-surface-card rounded-2xl p-5 border border-wire space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-white">Formato del CSV</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <h2 className="text-sm font-semibold text-ink-strong">Formato del CSV</h2>
+            <p className="text-xs text-ink-dim mt-0.5">
               8 columnas — opcion3 y opcion4 son opcionales; la primera fila es la cabecera.
             </p>
           </div>
@@ -423,37 +423,37 @@ export default function ImportForm() {
         <div className="overflow-x-auto">
           <table className="w-full text-xs font-mono">
             <thead>
-              <tr className="text-gray-500 border-b border-gray-800">
+              <tr className="text-ink-dim border-b border-wire">
                 {['asignatura','tema','enunciado','opcion1','opcion2','opcion3*','opcion4*','correcta'].map(h => (
                   <th key={h} className="px-2 py-1.5 text-left font-medium whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="text-gray-400">
+            <tbody className="text-ink-faint">
               <tr>
                 <td className="px-2 py-1">Ejemplo</td>
                 <td className="px-2 py-1">Tema 1</td>
                 <td className="px-2 py-1 max-w-[180px] truncate">¿Capital de España?</td>
                 <td className="px-2 py-1">Madrid</td>
                 <td className="px-2 py-1">Barcelona</td>
-                <td className="px-2 py-1 text-gray-600">Sevilla</td>
-                <td className="px-2 py-1 text-gray-600">Valencia</td>
+                <td className="px-2 py-1 text-ink-ghost">Sevilla</td>
+                <td className="px-2 py-1 text-ink-ghost">Valencia</td>
                 <td className="px-2 py-1 text-green-500">1</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-gray-600">* Columnas opcionales. Si no hay opcion3/opcion4, omitirlas (no dejar vacías).</p>
+        <p className="text-xs text-ink-ghost">* Columnas opcionales. Si no hay opcion3/opcion4, omitirlas (no dejar vacías).</p>
       </div>
 
       {/* File input */}
-      <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
-        <h2 className="text-sm font-semibold text-white">Seleccionar archivo</h2>
+      <div className="bg-surface-card rounded-2xl p-5 border border-wire space-y-3">
+        <h2 className="text-sm font-semibold text-ink-strong">Seleccionar archivo</h2>
         <label className="flex items-center gap-4 cursor-pointer group">
-          <span className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 group-hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm font-medium rounded-xl transition-colors">
+          <span className="px-4 py-2.5 bg-surface-input hover:bg-surface-hover group-hover:bg-surface-hover border border-wire text-ink-muted text-sm font-medium rounded-xl transition-colors">
             Elegir CSV…
           </span>
-          <span className="text-sm text-gray-500 truncate">
+          <span className="text-sm text-ink-dim truncate">
             {fileName || 'Ningún archivo seleccionado'}
           </span>
           <input
@@ -489,10 +489,10 @@ export default function ImportForm() {
 
           {/* Summary bar */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <span className="text-sm text-gray-400">
-              <span className="text-white font-semibold">{validRows.length}</span> totales
+            <span className="text-sm text-ink-faint">
+              <span className="text-ink-strong font-semibold">{validRows.length}</span> totales
               {isCheckingDuplicates
-                ? <span className="text-gray-500"> · comprobando duplicados…</span>
+                ? <span className="text-ink-dim"> · comprobando duplicados…</span>
                 : (
                   <>
                     {exactCount > 0 && (
@@ -505,7 +505,7 @@ export default function ImportForm() {
                 )
               }
               {invalidRows.length > 0 && (
-                <> · <span className="text-gray-500 font-semibold">{invalidRows.length}</span> con error</>
+                <> · <span className="text-ink-dim font-semibold">{invalidRows.length}</span> con error</>
               )}
               {' · '}
               <span className="text-blue-400 font-semibold">{toImportCount}</span> a importar
@@ -520,7 +520,7 @@ export default function ImportForm() {
 
           {/* New row form */}
           {showNewForm && (
-            <div className="bg-gray-900 border border-blue-800/50 rounded-xl p-4 space-y-3">
+            <div className="bg-surface-card border border-blue-800/50 rounded-xl p-4 space-y-3">
               <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Nueva pregunta</p>
 
               <div className="grid grid-cols-2 gap-2">
@@ -529,14 +529,14 @@ export default function ImportForm() {
                   placeholder="Asignatura"
                   value={newSubject}
                   onChange={e => setNewSubject(e.target.value)}
-                  className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-ink-strong text-sm placeholder-ink-dim focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 <input
                   type="text"
                   placeholder="Tema"
                   value={newTopic}
                   onChange={e => setNewTopic(e.target.value)}
-                  className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-ink-strong text-sm placeholder-ink-dim focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
@@ -547,9 +547,9 @@ export default function ImportForm() {
                   onChange={e => { setNewStmt(e.target.value); setNewIsDuplicate(false) }}
                   onBlur={handleNewStmtBlur}
                   rows={2}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                  className="w-full px-3 py-2 bg-surface-input border border-wire rounded-lg text-ink-strong text-sm placeholder-ink-dim focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
                 />
-                {isCheckingNew && <p className="text-xs text-gray-500 mt-1">Comprobando duplicado…</p>}
+                {isCheckingNew && <p className="text-xs text-ink-dim mt-1">Comprobando duplicado…</p>}
                 {!isCheckingNew && newIsDuplicate && (
                   <p className="text-xs text-amber-400 mt-1">
                     ⚠ Ya existe una pregunta con este enunciado.
@@ -562,7 +562,7 @@ export default function ImportForm() {
                   <div
                     key={i}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
-                      newCorrect === i ? 'bg-green-950/40 border-green-800' : 'bg-gray-800 border-gray-700'
+                      newCorrect === i ? 'bg-green-950/40 border-green-800' : 'bg-surface-input border-wire'
                     }`}
                   >
                     <input
@@ -581,7 +581,7 @@ export default function ImportForm() {
                         o[i] = e.target.value
                         setNewOpts(o)
                       }}
-                      className="flex-1 bg-transparent text-white text-sm placeholder-gray-500 focus:outline-none"
+                      className="flex-1 bg-transparent text-ink-strong text-sm placeholder-ink-dim focus:outline-none"
                     />
                     {newOpts.length > 2 && (
                       <button
@@ -591,7 +591,7 @@ export default function ImportForm() {
                           setNewOpts(o)
                           if (newCorrect >= i && newCorrect > 0) setNewCorrect(newCorrect - 1)
                         }}
-                        className="text-gray-600 hover:text-red-400 text-lg leading-none"
+                        className="text-ink-ghost hover:text-red-400 text-lg leading-none"
                       >
                         ×
                       </button>
@@ -611,7 +611,7 @@ export default function ImportForm() {
                 <button
                   type="button"
                   onClick={() => { setShowNewForm(false); resetNewForm() }}
-                  className="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200"
+                  className="px-3 py-1.5 text-sm text-ink-faint hover:text-ink"
                 >
                   Cancelar
                 </button>
@@ -647,7 +647,7 @@ export default function ImportForm() {
                 placeholder="Buscar por enunciado…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="flex-1 min-w-[200px] px-3 py-2 bg-gray-900 border border-gray-800 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 min-w-[200px] px-3 py-2 bg-surface-card border border-wire rounded-lg text-sm text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               {selected.size > 0 && (
                 <button
@@ -668,7 +668,7 @@ export default function ImportForm() {
               {undoStack.length > 0 && (
                 <button
                   onClick={undo}
-                  className="px-3 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm rounded-lg transition-colors whitespace-nowrap"
+                  className="px-3 py-2 bg-surface-input hover:bg-surface-hover border border-wire text-ink-muted text-sm rounded-lg transition-colors whitespace-nowrap"
                 >
                   ↩ Deshacer
                 </button>
@@ -687,7 +687,7 @@ export default function ImportForm() {
                   onChange={toggleSelectAll}
                   className="w-4 h-4 accent-blue-500 cursor-pointer flex-shrink-0"
                 />
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-ink-dim">
                   {selected.size > 0
                     ? `${selected.size} seleccionada${selected.size !== 1 ? 's' : ''}`
                     : 'Seleccionar todo'}
@@ -698,12 +698,12 @@ export default function ImportForm() {
                 <div key={row.id} className="py-3">
                   {editingId === row.id && editDraft ? (
                     /* Edit mode */
-                    <div className="space-y-3 bg-gray-900 border border-blue-800/50 rounded-xl p-4">
+                    <div className="space-y-3 bg-surface-card border border-blue-800/50 rounded-xl p-4">
                       <textarea
                         value={editDraft.statement}
                         onChange={e => setEditDraft({ ...editDraft, statement: e.target.value })}
                         rows={2}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                        className="w-full px-3 py-2 bg-surface-input border border-wire rounded-lg text-ink-strong text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
                       />
                       <div className="space-y-1.5">
                         {editDraft.options.map((opt, oi) => (
@@ -712,7 +712,7 @@ export default function ImportForm() {
                             className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
                               editDraft.correctIndex === oi
                                 ? 'bg-green-950/40 border-green-800'
-                                : 'bg-gray-800 border-gray-700'
+                                : 'bg-surface-input border-wire'
                             }`}
                           >
                             <input
@@ -726,13 +726,13 @@ export default function ImportForm() {
                               type="text"
                               value={opt}
                               onChange={e => updateDraftOption(oi, e.target.value)}
-                              className="flex-1 bg-transparent text-white text-sm focus:outline-none"
+                              className="flex-1 bg-transparent text-ink-strong text-sm focus:outline-none"
                             />
                             {editDraft.options.length > 2 && (
                               <button
                                 type="button"
                                 onClick={() => removeDraftOption(oi)}
-                                className="text-gray-600 hover:text-red-400 text-lg leading-none"
+                                className="text-ink-ghost hover:text-red-400 text-lg leading-none"
                               >
                                 ×
                               </button>
@@ -750,7 +750,7 @@ export default function ImportForm() {
                       <div className="flex gap-2 justify-end">
                         <button
                           onClick={cancelEdit}
-                          className="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200"
+                          className="px-3 py-1.5 text-sm text-ink-faint hover:text-ink"
                         >
                           Cancelar
                         </button>
@@ -771,21 +771,21 @@ export default function ImportForm() {
                         onChange={() => toggleSelect(row.id)}
                         className="w-4 h-4 accent-blue-500 cursor-pointer flex-shrink-0 mt-1"
                       />
-                      <span className="text-xs text-gray-600 tabular-nums w-5 flex-shrink-0 mt-1">
+                      <span className="text-xs text-ink-ghost tabular-nums w-5 flex-shrink-0 mt-1">
                         {i + 1}.
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-xs px-2 py-0.5 bg-gray-800 text-gray-400 rounded-full truncate max-w-[35%]">
+                          <span className="text-xs px-2 py-0.5 bg-surface-input text-ink-faint rounded-full truncate max-w-[35%]">
                             {row.subject}
                           </span>
-                          <span className="text-xs text-gray-600 truncate max-w-[35%]">{row.topic}</span>
+                          <span className="text-xs text-ink-ghost truncate max-w-[35%]">{row.topic}</span>
                           <DupBadge
                             level={row.duplicateLevel}
                             onClick={e => { e.stopPropagation(); setCompareRow(row) }}
                           />
                         </div>
-                        <p className="text-sm text-white leading-snug">{row.statement}</p>
+                        <p className="text-sm text-ink-strong leading-snug">{row.statement}</p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {row.options.map((opt, oi) => (
                             <span
@@ -793,7 +793,7 @@ export default function ImportForm() {
                               className={`text-xs px-2 py-1 rounded-lg ${
                                 oi === row.correctIndex
                                   ? 'bg-green-900/40 border border-green-700/50 text-green-300'
-                                  : 'bg-gray-800 text-gray-400'
+                                  : 'bg-surface-input text-ink-faint'
                               }`}
                             >
                               {oi === row.correctIndex ? '✓ ' : ''}{opt}
@@ -805,7 +805,7 @@ export default function ImportForm() {
                         <button
                           onClick={() => startEdit(row)}
                           title="Editar"
-                          className="p-1.5 text-gray-500 hover:text-blue-400 transition-colors"
+                          className="p-1.5 text-ink-dim hover:text-blue-400 transition-colors"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -814,7 +814,7 @@ export default function ImportForm() {
                         <button
                           onClick={() => deleteRow(row.id)}
                           title="Eliminar"
-                          className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"
+                          className="p-1.5 text-ink-dim hover:text-red-400 transition-colors"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -829,14 +829,14 @@ export default function ImportForm() {
           )}
 
           {filteredValid.length === 0 && validRows.length > 0 && searchQuery && (
-            <p className="text-center text-gray-500 text-sm py-4">
+            <p className="text-center text-ink-dim text-sm py-4">
               No hay preguntas que coincidan con la búsqueda.
             </p>
           )}
 
           {/* Import button — fixed at bottom */}
           {validRows.length > 0 && (
-            <div className="fixed bottom-0 inset-x-0 z-50 p-4 bg-gray-950/95 border-t border-gray-800 backdrop-blur-sm">
+            <div className="fixed bottom-0 inset-x-0 z-50 p-4 bg-surface-page/95 border-t border-wire backdrop-blur-sm">
               <div className="max-w-4xl mx-auto">
                 <button
                   onClick={handleImport}
@@ -854,7 +854,7 @@ export default function ImportForm() {
       )}
 
       {hasLoaded && allRows.length === 0 && (
-        <p className="text-center text-gray-500 text-sm py-4">
+        <p className="text-center text-ink-dim text-sm py-4">
           El archivo no contiene filas de datos (solo cabecera o vacío).
         </p>
       )}

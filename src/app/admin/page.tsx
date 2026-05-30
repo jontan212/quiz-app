@@ -21,19 +21,19 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <div className="bg-gray-900 border-b border-gray-800">
+      <div className="bg-surface-card border-b border-wire">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-400">Panel de administración</span>
+          <span className="text-sm font-medium text-ink-faint">Panel de administración</span>
           <div className="flex items-center gap-4">
             <a
               href="/admin/import"
-              className="text-sm text-gray-400 hover:text-gray-200 transition-colors font-medium"
+              className="text-sm text-ink-faint hover:text-ink transition-colors font-medium"
             >
               Importar CSV →
             </a>
             <a
               href="/admin/subjects"
-              className="text-sm text-gray-400 hover:text-gray-200 transition-colors font-medium"
+              className="text-sm text-ink-faint hover:text-ink transition-colors font-medium"
             >
               Asignaturas →
             </a>

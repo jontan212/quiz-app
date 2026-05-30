@@ -10,16 +10,16 @@ export default async function ImportPage() {
 
   return (
     <div>
-      <div className="bg-gray-900 border-b border-gray-800">
+      <div className="bg-surface-card border-b border-wire">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <a
             href="/admin"
-            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-sm text-ink-dim hover:text-ink-muted transition-colors"
           >
             ← Admin
           </a>
-          <span className="text-gray-700">/</span>
-          <span className="text-sm font-medium text-gray-300">Importar preguntas CSV</span>
+          <span className="text-wire-muted">/</span>
+          <span className="text-sm font-medium text-ink-muted">Importar preguntas CSV</span>
         </div>
       </div>
       <ImportForm />

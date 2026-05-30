@@ -24,10 +24,10 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-surface-page flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-white mb-2 text-center">Admin</h1>
-        <p className="text-gray-500 text-sm text-center mb-8">
+        <h1 className="text-2xl font-bold text-ink-strong mb-2 text-center">Admin</h1>
+        <p className="text-ink-dim text-sm text-center mb-8">
           Acceso restringido
         </p>
 
@@ -35,7 +35,7 @@ export default function AdminLogin() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-300 mb-1.5"
+              className="block text-sm font-medium text-ink-muted mb-1.5"
             >
               Contraseña
             </label>
@@ -45,7 +45,7 @@ export default function AdminLogin() {
               name="password"
               required
               autoFocus
-              className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 

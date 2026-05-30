@@ -27,7 +27,7 @@ export default function DuplicateCompareModal({
       className="fixed inset-0 bg-black/70 flex items-start justify-center z-50 px-4 py-10 overflow-y-auto"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-3xl shadow-2xl my-auto">
+      <div className="bg-surface-card border border-wire rounded-2xl w-full max-w-3xl shadow-2xl my-auto">
 
         {/* Header */}
         <div className={`flex items-start justify-between gap-4 px-5 py-4 border-b ${
@@ -43,7 +43,7 @@ export default function DuplicateCompareModal({
                 {isExact ? 'Duplicado exacto' : 'Conflicto de respuestas'}
               </span>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-ink-dim">
               {isExact
                 ? 'Esta pregunta ya existe con las mismas opciones y la misma respuesta correcta.'
                 : 'El enunciado ya existe pero con opciones de respuesta o respuesta correcta diferente.'}
@@ -51,7 +51,7 @@ export default function DuplicateCompareModal({
           </div>
           <button
             onClick={onClose}
-            className="flex-shrink-0 text-gray-500 hover:text-gray-300 text-xl leading-none mt-0.5"
+            className="flex-shrink-0 text-ink-dim hover:text-ink-muted text-xl leading-none mt-0.5"
           >
             ✕
           </button>
@@ -105,15 +105,15 @@ function QuestionCard({
     <div className={`rounded-xl border p-4 space-y-3 ${
       variant === 'incoming'
         ? 'border-blue-700/40 bg-blue-950/20'
-        : 'border-gray-700/60 bg-gray-800/20'
+        : 'border-wire/60 bg-surface-input/20'
     }`}>
       <p className={`text-xs font-semibold uppercase tracking-wide ${
-        variant === 'incoming' ? 'text-blue-400' : 'text-gray-500'
+        variant === 'incoming' ? 'text-blue-400' : 'text-ink-dim'
       }`}>
         {label}
       </p>
 
-      <p className="text-sm text-white leading-relaxed">{question.statement}</p>
+      <p className="text-sm text-ink-strong leading-relaxed">{question.statement}</p>
 
       <div className="flex flex-col gap-1.5">
         {question.options.map((opt, i) => {
@@ -129,10 +129,10 @@ function QuestionCard({
                     : 'bg-green-900/40 border-green-700/50 text-green-300'
                   : isDifferent
                     ? 'bg-orange-950/30 border-orange-800/40 text-orange-400/70'
-                    : 'bg-gray-800/60 border-gray-700/50 text-gray-400'
+                    : 'bg-surface-input/60 border-wire/50 text-ink-faint'
               }`}
             >
-              {opt.isCorrect ? '✓ ' : ''}{opt.text || <em className="text-gray-600">vacío</em>}
+              {opt.isCorrect ? '✓ ' : ''}{opt.text || <em className="text-ink-ghost">vacío</em>}
               {isDifferent && <span className="ml-1 text-orange-500/60">←</span>}
             </span>
           )

@@ -254,20 +254,20 @@ export default function QuestionForm({ subjects, topics }: Props) {
   const isEditing = editingQid !== null
 
   return (
-    <div className="min-h-screen bg-gray-950 py-12 px-4">
+    <div className="min-h-screen bg-surface-page py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-12">
 
         {/* ── FORM ──────────────────────────────────────────── */}
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-ink-strong">
               {isEditing ? 'Editando pregunta' : 'Nueva pregunta'}
             </h1>
             {isEditing && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="text-sm text-gray-400 hover:text-gray-200 transition-colors"
+                className="text-sm text-ink-faint hover:text-ink transition-colors"
               >
                 Cancelar edición
               </button>
@@ -278,7 +278,7 @@ export default function QuestionForm({ subjects, topics }: Props) {
 
             {/* Enunciado */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-ink-muted mb-1.5">
                 Enunciado <span className="text-red-400">*</span>
               </label>
               <textarea
@@ -286,11 +286,11 @@ export default function QuestionForm({ subjects, topics }: Props) {
                 onChange={e => { setStatement(e.target.value); setDuplicateInDb(false); setDuplicateInQueue(false) }}
                 onBlur={handleStatementBlur}
                 rows={3}
-                className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 placeholder="Escribe el enunciado de la pregunta…"
               />
               {isCheckingDuplicate && (
-                <p className="mt-1.5 text-xs text-gray-500">Comprobando duplicados…</p>
+                <p className="mt-1.5 text-xs text-ink-dim">Comprobando duplicados…</p>
               )}
               {!isCheckingDuplicate && duplicateInDb && (
                 <p className="mt-1.5 text-xs text-amber-400">
@@ -307,27 +307,27 @@ export default function QuestionForm({ subjects, topics }: Props) {
             {/* Asignatura + Tema */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-ink-muted mb-1.5">
                   Asignatura <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={subject}
                   onChange={e => { setSubject(e.target.value); setTopic('') }}
-                  className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Selecciona una asignatura…</option>
                   {subjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                <label className="block text-sm font-medium text-ink-muted mb-1.5">
                   Tema <span className="text-red-400">*</span>
                 </label>
                 <select
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
                   disabled={!subject}
-                  className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Selecciona un tema…</option>
                   {filteredTopics.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
@@ -348,7 +348,7 @@ export default function QuestionForm({ subjects, topics }: Props) {
             {/* Opciones */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-medium text-gray-300">
+                <label className="text-sm font-medium text-ink-muted">
                   Opciones de respuesta <span className="text-red-400">*</span>
                 </label>
                 <button
@@ -364,7 +364,7 @@ export default function QuestionForm({ subjects, topics }: Props) {
                   <div
                     key={i}
                     className={`border rounded-lg px-3 py-3 space-y-2.5 transition-colors ${
-                      opt.is_correct ? 'bg-green-950/40 border-green-800' : 'bg-gray-800 border-gray-700'
+                      opt.is_correct ? 'bg-green-950/40 border-green-800' : 'bg-surface-input border-wire'
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -379,13 +379,13 @@ export default function QuestionForm({ subjects, topics }: Props) {
                         value={opt.text}
                         onChange={e => updateOption(i, { text: e.target.value })}
                         placeholder={`Opción ${i + 1}`}
-                        className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
+                        className="flex-1 bg-transparent text-ink-strong placeholder-ink-dim focus:outline-none text-sm"
                       />
                       {options.length > 2 && (
                         <button
                           type="button"
                           onClick={() => removeOption(i)}
-                          className="text-gray-600 hover:text-red-400 transition-colors flex-shrink-0 text-lg leading-none"
+                          className="text-ink-ghost hover:text-red-400 transition-colors flex-shrink-0 text-lg leading-none"
                         >
                           ×
                         </button>
@@ -403,21 +403,21 @@ export default function QuestionForm({ subjects, topics }: Props) {
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-ink-dim">
                 Activa el checkbox de las opciones que son correctas.
               </p>
             </div>
 
             {/* Explicación */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Explicación <span className="text-gray-500 font-normal">(opcional)</span>
+              <label className="block text-sm font-medium text-ink-muted mb-1.5">
+                Explicación <span className="text-ink-dim font-normal">(opcional)</span>
               </label>
               <textarea
                 value={explanation}
                 onChange={e => setExplanation(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 placeholder="Explica por qué esta es la respuesta correcta…"
               />
             </div>
@@ -444,9 +444,9 @@ export default function QuestionForm({ subjects, topics }: Props) {
         {queue.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-ink-strong">
                 Cola{' '}
-                <span className="text-gray-400 font-normal">
+                <span className="text-ink-faint font-normal">
                   ({queue.length} {queue.length === 1 ? 'pregunta' : 'preguntas'})
                 </span>
               </h2>
@@ -454,7 +454,7 @@ export default function QuestionForm({ subjects, topics }: Props) {
                 <button
                   type="button"
                   onClick={() => { setQueue([]); if (editingQid) resetForm() }}
-                  className="text-sm text-gray-500 hover:text-red-400 transition-colors"
+                  className="text-sm text-ink-dim hover:text-red-400 transition-colors"
                 >
                   Limpiar cola
                 </button>
@@ -491,15 +491,15 @@ export default function QuestionForm({ subjects, topics }: Props) {
                   className={`border rounded-lg px-4 py-3 flex items-start gap-3 transition-colors ${
                     item.qid === editingQid
                       ? 'bg-blue-950/40 border-blue-700'
-                      : 'bg-gray-800 border-gray-700'
+                      : 'bg-surface-card border-wire'
                   }`}
                 >
-                  <span className="text-gray-500 text-sm font-mono pt-0.5 flex-shrink-0">
+                  <span className="text-ink-ghost text-sm font-mono pt-0.5 flex-shrink-0">
                     {idx + 1}.
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{item.statement}</p>
-                    <p className="text-gray-400 text-xs mt-0.5">
+                    <p className="text-ink-strong text-sm font-medium truncate">{item.statement}</p>
+                    <p className="text-ink-faint text-xs mt-0.5">
                       {item.subject} · {item.topic} · {item.options.length} opciones
                     </p>
                     {item.hasDuplicateWarning && (
@@ -519,7 +519,7 @@ export default function QuestionForm({ subjects, topics }: Props) {
                       type="button"
                       onClick={() => handleRemove(item.qid)}
                       disabled={isSaving}
-                      className="text-xs text-gray-500 hover:text-red-400 disabled:opacity-50 transition-colors"
+                      className="text-xs text-ink-dim hover:text-red-400 disabled:opacity-50 transition-colors"
                     >
                       Eliminar
                     </button>

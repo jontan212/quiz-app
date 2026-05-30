@@ -72,9 +72,9 @@ export default function ImagePicker({
     return (
       <div className={compact ? '' : 'space-y-1.5'}>
         {label && !compact && (
-          <p className="text-sm font-medium text-gray-300">
+          <p className="text-sm font-medium text-ink-muted">
             {label}{' '}
-            {optional && <span className="text-gray-500 font-normal">(opcional)</span>}
+            {optional && <span className="text-ink-dim font-normal">(opcional)</span>}
           </p>
         )}
         {fileInput}
@@ -83,7 +83,7 @@ export default function ImagePicker({
           <img
             src={preview}
             alt="Vista previa"
-            className={`rounded-lg border border-gray-700 object-contain bg-gray-800/60 ${
+            className={`rounded-lg border border-wire object-contain bg-surface-input/60 ${
               compact ? 'max-h-16 max-w-[8rem]' : 'max-h-40 max-w-full'
             }`}
           />
@@ -91,14 +91,14 @@ export default function ImagePicker({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="block text-xs text-gray-500 hover:text-blue-400 transition-colors"
+              className="block text-xs text-ink-dim hover:text-blue-400 transition-colors"
             >
               Cambiar imagen
             </button>
             <button
               type="button"
               onClick={handleClear}
-              className="block text-xs text-gray-600 hover:text-red-400 transition-colors"
+              className="block text-xs text-ink-ghost hover:text-red-400 transition-colors"
             >
               × Eliminar
             </button>
@@ -117,17 +117,17 @@ export default function ImagePicker({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex-shrink-0 text-xs text-gray-600 hover:text-blue-400 transition-colors"
+          className="flex-shrink-0 text-xs text-ink-ghost hover:text-blue-400 transition-colors"
         >
           📷 Subir imagen
         </button>
-        <span className="text-gray-700 select-none">|</span>
+        <span className="text-wire-muted select-none">|</span>
         <input
           type="text"
           value={url}
           onChange={e => handleUrlChange(e.target.value)}
           placeholder="o pegar URL…"
-          className="flex-1 min-w-0 text-xs bg-transparent text-gray-400 placeholder-gray-600 focus:outline-none focus:text-gray-200"
+          className="flex-1 min-w-0 text-xs bg-transparent text-ink-faint placeholder-ink-ghost focus:outline-none focus:text-ink"
         />
       </div>
     )
@@ -136,25 +136,25 @@ export default function ImagePicker({
   return (
     <div className="space-y-1.5">
       {label && (
-        <p className="text-sm font-medium text-gray-300">
+        <p className="text-sm font-medium text-ink-muted">
           {label}{' '}
-          {optional && <span className="text-gray-500 font-normal">(opcional)</span>}
+          {optional && <span className="text-ink-dim font-normal">(opcional)</span>}
         </p>
       )}
       {fileInput}
-      <div className="border border-dashed border-gray-700 rounded-lg p-4 space-y-3">
+      <div className="border border-dashed border-wire rounded-lg p-4 space-y-3">
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="w-full py-2 px-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-gray-300 transition-colors text-center"
+          className="w-full py-2 px-4 bg-surface-input hover:bg-surface-hover border border-wire rounded-lg text-sm text-ink-muted transition-colors text-center"
         >
           Subir desde dispositivo
         </button>
 
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-px bg-gray-700/60" />
-          <span className="text-xs text-gray-600 select-none">o</span>
-          <div className="flex-1 h-px bg-gray-700/60" />
+          <div className="flex-1 h-px bg-wire" />
+          <span className="text-xs text-ink-ghost select-none">o</span>
+          <div className="flex-1 h-px bg-wire" />
         </div>
 
         <input
@@ -162,7 +162,7 @@ export default function ImagePicker({
           value={url}
           onChange={e => handleUrlChange(e.target.value)}
           placeholder="Pegar URL de imagen…"
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
     </div>

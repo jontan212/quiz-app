@@ -168,7 +168,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
   }
 
   function sortIcon(field: SortField) {
-    if (sortField !== field) return <span className="ml-0.5 text-gray-700">↕</span>
+    if (sortField !== field) return <span className="ml-0.5 text-wire-muted">↕</span>
     return <span className="ml-0.5 text-blue-400">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
@@ -271,26 +271,26 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
 
   // ── Render ───────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-950 py-8 px-4">
+    <div className="min-h-screen bg-surface-page py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-5">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Gestionar preguntas</h1>
-            <p className="text-gray-500 text-sm mt-0.5">
+            <h1 className="text-2xl font-bold text-ink-strong">Gestionar preguntas</h1>
+            <p className="text-ink-dim text-sm mt-0.5">
               {filtered.length !== questions.length
                 ? `${filtered.length} de ${questions.length} preguntas`
                 : `${questions.length} preguntas`}
             </p>
           </div>
-          <a href="/admin" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
+          <a href="/admin" className="text-sm text-ink-dim hover:text-ink-muted transition-colors">
             ← Admin
           </a>
         </div>
 
         {/* Filters */}
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-4 space-y-3">
+        <div className="bg-surface-card rounded-2xl border border-wire p-4 space-y-3">
           {/* Search */}
           <div className="flex gap-2">
             <input
@@ -298,7 +298,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
               placeholder="Buscar por enunciado…"
               value={search}
               onChange={e => changeSearch(e.target.value)}
-              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <button
               onClick={changeCaseSensitive}
@@ -306,7 +306,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
               className={`px-3 py-2 rounded-lg border text-xs font-mono font-semibold transition-colors ${
                 caseSensitive
                   ? 'bg-blue-600/20 border-blue-600/50 text-blue-400'
-                  : 'bg-gray-800 border-gray-700 text-gray-500 hover:text-gray-300'
+                  : 'bg-surface-input border-wire text-ink-dim hover:text-ink-muted'
               }`}
             >
               Aa
@@ -318,7 +318,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
             <select
               value={subjectFilter}
               onChange={e => changeSubject(e.target.value)}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option value="">Todas las asignaturas</option>
               {subjects.map(s => <option key={s} value={s}>{s}</option>)}
@@ -328,26 +328,26 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
               value={topicFilter}
               onChange={e => changeTopic(e.target.value)}
               disabled={topics.length === 0}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+              className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
             >
               <option value="">Todos los temas</option>
               {topics.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-600">Desde</span>
+              <span className="text-xs text-ink-ghost">Desde</span>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={e => changeDateFrom(e.target.value)}
-                className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
-              <span className="text-xs text-gray-600">hasta</span>
+              <span className="text-xs text-ink-ghost">hasta</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={e => changeDateTo(e.target.value)}
-                className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
@@ -356,13 +356,13 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
               className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap ${
                 onlyDuplicates
                   ? 'bg-amber-900/40 border-amber-700/50 text-amber-400'
-                  : 'bg-gray-800 border-gray-700 text-gray-500 hover:text-gray-300'
+                  : 'bg-surface-input border-wire text-ink-dim hover:text-ink-muted'
               }`}
             >
               Solo duplicadas
               {dupMap.size > 0 && (
                 <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${
-                  onlyDuplicates ? 'bg-amber-700/40 text-amber-300' : 'bg-gray-700 text-gray-400'
+                  onlyDuplicates ? 'bg-amber-700/40 text-amber-300' : 'bg-surface-hover text-ink-faint'
                 }`}>
                   {dupMap.size}
                 </span>
@@ -372,7 +372,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="px-3 py-2 text-xs text-gray-500 hover:text-gray-300 transition-colors underline"
+                className="px-3 py-2 text-xs text-ink-dim hover:text-ink-muted transition-colors underline"
               >
                 Limpiar filtros
               </button>
@@ -388,7 +388,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
             </span>
             <button
               onClick={exportCSV}
-              className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-xs rounded-lg transition-colors"
+              className="px-3 py-1.5 bg-surface-input hover:bg-surface-hover border border-wire text-ink-muted text-xs rounded-lg transition-colors"
             >
               Exportar CSV
             </button>
@@ -400,7 +400,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
             </button>
             <button
               onClick={() => setSelected(new Set())}
-              className="text-gray-500 hover:text-gray-300 text-lg leading-none"
+              className="text-ink-dim hover:text-ink-muted text-lg leading-none"
             >
               ✕
             </button>
@@ -415,21 +415,21 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
         )}
 
         {/* Table card */}
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+        <div className="bg-surface-card rounded-2xl border border-wire overflow-hidden">
 
           {/* Table toolbar */}
-          <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-gray-800">
-            <span className="text-xs text-gray-500">
+          <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-wire">
+            <span className="text-xs text-ink-dim">
               {filtered.length === 0
                 ? 'Sin resultados'
                 : `Mostrando ${pageStart + 1}–${Math.min(pageStart + pageSize, filtered.length)} de ${filtered.length}`}
             </span>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-600">Por página:</label>
+              <label className="text-xs text-ink-ghost">Por página:</label>
               <select
                 value={pageSize}
                 onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
-                className="px-2 py-1 bg-gray-800 border border-gray-700 rounded-lg text-xs text-gray-200 focus:outline-none"
+                className="px-2 py-1 bg-surface-input border border-wire rounded-lg text-xs text-ink focus:outline-none"
               >
                 {PAGE_SIZES.map(n => <option key={n} value={n}>{n}</option>)}
               </select>
@@ -438,13 +438,13 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
 
           {filtered.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="text-gray-500 text-sm">No hay preguntas con los filtros seleccionados.</p>
+              <p className="text-ink-dim text-sm">No hay preguntas con los filtros seleccionados.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-800 text-left">
+                  <tr className="border-b border-wire text-left">
                     <th className="w-10 px-3 py-2.5">
                       <input
                         type="checkbox"
@@ -453,15 +453,15 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                         className="w-4 h-4 accent-blue-500 cursor-pointer"
                       />
                     </th>
-                    <th className="w-8 px-2 py-2.5 text-xs text-gray-600 font-medium">#</th>
-                    <th className="px-3 py-2.5 text-xs text-gray-500 font-medium uppercase tracking-wide">
+                    <th className="w-8 px-2 py-2.5 text-xs text-ink-ghost font-medium">#</th>
+                    <th className="px-3 py-2.5 text-xs text-ink-dim font-medium uppercase tracking-wide">
                       Enunciado
                     </th>
                     <th className="px-3 py-2.5">
                       <button
                         onClick={() => handleSort('subject')}
                         className={`flex items-center text-xs font-medium uppercase tracking-wide whitespace-nowrap transition-colors ${
-                          sortField === 'subject' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'
+                          sortField === 'subject' ? 'text-blue-400' : 'text-ink-dim hover:text-ink-muted'
                         }`}
                       >
                         Asignatura {sortIcon('subject')}
@@ -471,7 +471,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                       <button
                         onClick={() => handleSort('topic')}
                         className={`flex items-center text-xs font-medium uppercase tracking-wide whitespace-nowrap transition-colors ${
-                          sortField === 'topic' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'
+                          sortField === 'topic' ? 'text-blue-400' : 'text-ink-dim hover:text-ink-muted'
                         }`}
                       >
                         Tema {sortIcon('topic')}
@@ -481,13 +481,13 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                       <button
                         onClick={() => handleSort('created_at')}
                         className={`flex items-center text-xs font-medium uppercase tracking-wide whitespace-nowrap transition-colors ${
-                          sortField === 'created_at' ? 'text-blue-400' : 'text-gray-500 hover:text-gray-300'
+                          sortField === 'created_at' ? 'text-blue-400' : 'text-ink-dim hover:text-ink-muted'
                         }`}
                       >
                         Fecha {sortIcon('created_at')}
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-xs text-gray-500 font-medium uppercase tracking-wide text-right">
+                    <th className="px-3 py-2.5 text-xs text-ink-dim font-medium uppercase tracking-wide text-right">
                       Acciones
                     </th>
                   </tr>
@@ -505,12 +505,12 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                               s.has(q.id) ? s.delete(q.id) : s.add(q.id)
                               return s
                             })}
-                          className={`border-b border-gray-800/50 cursor-pointer transition-colors ${
+                          className={`border-b border-wire/50 cursor-pointer transition-colors ${
                             isExpanded
-                              ? 'bg-gray-800/50'
+                              ? 'bg-surface-input/50'
                               : selected.has(q.id)
                                 ? 'bg-blue-950/20 hover:bg-blue-950/30'
-                                : 'hover:bg-gray-800/30'
+                                : 'hover:bg-surface-input/30'
                           }`}
                         >
                           {/* Checkbox */}
@@ -527,14 +527,14 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                           </td>
 
                           {/* Row number */}
-                          <td className="px-2 py-2.5 text-xs text-gray-600 tabular-nums">
+                          <td className="px-2 py-2.5 text-xs text-ink-ghost tabular-nums">
                             {pageStart + i + 1}
                           </td>
 
                           {/* Statement */}
                           <td className="px-3 py-2.5 max-w-xs lg:max-w-md">
                             <div className="flex items-start gap-2">
-                              <span className="text-white text-sm leading-snug line-clamp-2 min-w-0">
+                              <span className="text-ink-strong text-sm leading-snug line-clamp-2 min-w-0">
                                 {q.statement}
                               </span>
                               {dupInfo && (
@@ -561,12 +561,12 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                           </td>
 
                           {/* Topic */}
-                          <td className="px-3 py-2.5 text-xs text-gray-400 whitespace-nowrap">
+                          <td className="px-3 py-2.5 text-xs text-ink-faint whitespace-nowrap">
                             {q.topic}
                           </td>
 
                           {/* Date */}
-                          <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap tabular-nums">
+                          <td className="px-3 py-2.5 text-xs text-ink-dim whitespace-nowrap tabular-nums">
                             {fmtDate(q.created_at)}
                           </td>
 
@@ -578,7 +578,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                             <div className="flex items-center gap-1.5 justify-end">
                               <a
                                 href={`/admin/questions/${q.id}/edit`}
-                                className="px-2.5 py-1 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors"
+                                className="px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-ink-muted rounded-lg transition-colors"
                               >
                                 Editar
                               </a>
@@ -594,7 +594,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                                   <button
                                     onClick={() => setConfirmSingleId(null)}
                                     disabled={isPending}
-                                    className="px-2.5 py-1 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg transition-colors"
+                                    className="px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-ink-faint rounded-lg transition-colors"
                                   >
                                     ✕
                                   </button>
@@ -602,7 +602,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                               ) : (
                                 <button
                                   onClick={() => setConfirmSingleId(q.id)}
-                                  className="px-2.5 py-1 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-red-400 hover:text-red-300 rounded-lg transition-colors"
+                                  className="px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-red-400 hover:text-red-300 rounded-lg transition-colors"
                                 >
                                   Eliminar
                                 </button>
@@ -613,10 +613,10 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
 
                         {/* Expanded detail row */}
                         {isExpanded && (
-                          <tr className="border-b border-gray-800/50 bg-gray-800/20">
+                          <tr className="border-b border-wire/50 bg-surface-input/20">
                             <td colSpan={7} className="px-6 py-5">
                               <div className="space-y-4 max-w-3xl">
-                                <p className="text-white text-sm leading-relaxed">{q.statement}</p>
+                                <p className="text-ink-strong text-sm leading-relaxed">{q.statement}</p>
 
                                 <div className="flex flex-wrap gap-2">
                                   {opts.map((opt, oi) => (
@@ -625,7 +625,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                                       className={`text-xs px-3 py-1.5 rounded-lg border ${
                                         opt.is_correct
                                           ? 'bg-green-900/40 border-green-700/50 text-green-300'
-                                          : 'bg-gray-800 border-gray-700/50 text-gray-400'
+                                          : 'bg-surface-input border-wire/50 text-ink-faint'
                                       }`}
                                     >
                                       {opt.is_correct ? '✓ ' : ''}{opt.text ?? `Opción ${oi + 1}`}
@@ -634,13 +634,13 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                                 </div>
 
                                 {q.explanation && (
-                                  <div className="text-xs text-gray-400 bg-gray-900/80 rounded-lg px-3 py-2 border border-gray-800">
-                                    <span className="text-gray-600 font-medium">Explicación: </span>
+                                  <div className="text-xs text-ink-faint bg-surface-card/80 rounded-lg px-3 py-2 border border-wire">
+                                    <span className="text-ink-ghost font-medium">Explicación: </span>
                                     {q.explanation}
                                   </div>
                                 )}
 
-                                <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+                                <div className="flex flex-wrap gap-4 text-xs text-ink-ghost">
                                   <span>Creada: {new Date(q.created_at).toLocaleString('es-ES')}</span>
                                   <span>Actualizada: {new Date(q.updated_at).toLocaleString('es-ES')}</span>
                                   <span>{opts.length} opciones</span>
@@ -669,28 +669,28 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between gap-4 px-4 py-3 border-t border-gray-800">
-              <span className="text-xs text-gray-500">
+            <div className="flex items-center justify-between gap-4 px-4 py-3 border-t border-wire">
+              <span className="text-xs text-ink-dim">
                 Página {safePage} de {totalPages}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setPage(1)}
                   disabled={safePage === 1}
-                  className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-2 py-1.5 text-xs text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   «
                 </button>
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={safePage === 1}
-                  className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-2 py-1.5 text-xs text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   ‹
                 </button>
                 {pageList().map((p, idx) =>
                   p === '...'
-                    ? <span key={`ellipsis-${idx}`} className="px-2 py-1.5 text-xs text-gray-600">…</span>
+                    ? <span key={`ellipsis-${idx}`} className="px-2 py-1.5 text-xs text-ink-ghost">…</span>
                     : (
                       <button
                         key={p}
@@ -698,7 +698,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                         className={`px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
                           p === safePage
                             ? 'bg-blue-600 text-white font-medium'
-                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                            : 'text-ink-faint hover:text-ink hover:bg-surface-input'
                         }`}
                       >
                         {p}
@@ -708,14 +708,14 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
-                  className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-2 py-1.5 text-xs text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   ›
                 </button>
                 <button
                   onClick={() => setPage(totalPages)}
                   disabled={safePage === totalPages}
-                  className="px-2 py-1.5 text-xs text-gray-400 hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="px-2 py-1.5 text-xs text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   »
                 </button>
@@ -751,18 +751,18 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
       {/* Bulk delete confirmation modal */}
       {confirmBulkDelete && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
-            <h3 className="text-base font-semibold text-white">
+          <div className="bg-surface-card border border-wire rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <h3 className="text-base font-semibold text-ink-strong">
               Eliminar {selected.size} pregunta{selected.size !== 1 ? 's' : ''}
             </h3>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-ink-faint">
               Esta acción es irreversible. Se eliminarán también todas sus opciones de respuesta.
             </p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setConfirmBulkDelete(false)}
                 disabled={isPending}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition-colors"
+                className="px-4 py-2 bg-surface-input hover:bg-surface-hover text-ink-muted text-sm rounded-lg transition-colors"
               >
                 Cancelar
               </button>

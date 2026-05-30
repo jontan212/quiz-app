@@ -20,7 +20,7 @@ export default async function QuestionsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-surface-page flex items-center justify-center px-4">
         <div className="text-center space-y-4">
           <p className="text-red-400">Error al cargar las preguntas: {error.message}</p>
           <a href="/admin" className="text-sm text-blue-400 hover:text-blue-300">

@@ -144,18 +144,18 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
   // ── Render ─────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-950 py-12 px-4">
+    <div className="min-h-screen bg-surface-page py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-8">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Editar pregunta</h1>
-            <p className="text-gray-500 text-xs mt-1 font-mono">{question.id}</p>
+            <h1 className="text-2xl font-bold text-ink-strong">Editar pregunta</h1>
+            <p className="text-ink-dim text-xs mt-1 font-mono">{question.id}</p>
           </div>
           <a
             href="/admin/questions"
-            className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-sm text-ink-dim hover:text-ink-muted transition-colors"
           >
             ← Preguntas
           </a>
@@ -165,27 +165,27 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
 
           {/* Enunciado */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+            <label className="block text-sm font-medium text-ink-muted mb-1.5">
               Enunciado <span className="text-red-400">*</span>
             </label>
             <textarea
               value={statement}
               onChange={e => setStatement(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
           </div>
 
           {/* Asignatura + Tema */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-ink-muted mb-1.5">
                 Asignatura <span className="text-red-400">*</span>
               </label>
               <select
                 value={subject}
                 onChange={e => handleSubjectChange(e.target.value)}
-                className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Selecciona una asignatura…</option>
                 {subjects.map(s => (
@@ -194,14 +194,14 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-ink-muted mb-1.5">
                 Tema <span className="text-red-400">*</span>
               </label>
               <select
                 value={topic}
                 onChange={e => setTopic(e.target.value)}
                 disabled={!subject}
-                className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">Selecciona un tema…</option>
                 {filteredTopics.map(t => (
@@ -224,7 +224,7 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
           {/* Opciones */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-gray-300">
+              <label className="text-sm font-medium text-ink-muted">
                 Opciones de respuesta <span className="text-red-400">*</span>
               </label>
               <button
@@ -243,7 +243,7 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
                   className={`border rounded-lg px-3 py-3 space-y-2.5 transition-colors ${
                     opt.is_correct
                       ? 'bg-green-950/40 border-green-800'
-                      : 'bg-gray-800 border-gray-700'
+                      : 'bg-surface-input border-wire'
                   }`}
                 >
                   {/* Row: checkbox + text + delete */}
@@ -259,14 +259,14 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
                       value={opt.text}
                       onChange={e => updateOption(i, { text: e.target.value })}
                       placeholder={`Opción ${i + 1}`}
-                      className="flex-1 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm"
+                      className="flex-1 bg-transparent text-ink-strong placeholder-ink-dim focus:outline-none text-sm"
                     />
                     {options.length > 2 && (
                       <button
                         type="button"
                         onClick={() => removeOption(i)}
                         title="Eliminar opción"
-                        className="text-gray-600 hover:text-red-400 transition-colors flex-shrink-0 text-lg leading-none"
+                        className="text-ink-ghost hover:text-red-400 transition-colors flex-shrink-0 text-lg leading-none"
                       >
                         ×
                       </button>
@@ -287,21 +287,21 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
               ))}
             </div>
 
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-ink-dim">
               Activa el checkbox de las opciones que son correctas.
             </p>
           </div>
 
           {/* Explicación */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Explicación <span className="text-gray-500 font-normal">(opcional)</span>
+            <label className="block text-sm font-medium text-ink-muted mb-1.5">
+              Explicación <span className="text-ink-dim font-normal">(opcional)</span>
             </label>
             <textarea
               value={explanation}
               onChange={e => setExplanation(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="Explica por qué esta es la respuesta correcta…"
             />
           </div>

@@ -23,17 +23,17 @@ type Props = {
 }
 
 const selectCls =
-  'px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+  'px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
 const inputCls =
-  'px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+  'px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
 const btnPrimary =
   'px-3 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-900 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg transition-colors'
 const btnSecondary =
-  'px-2.5 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg transition-colors'
+  'px-2.5 py-1.5 text-xs font-medium bg-surface-input hover:bg-surface-hover text-ink-muted hover:text-ink-strong rounded-lg transition-colors'
 const btnDanger =
-  'px-2.5 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-red-400 hover:text-red-300 rounded-lg transition-colors'
+  'px-2.5 py-1.5 text-xs font-medium bg-surface-input hover:bg-surface-hover text-red-400 hover:text-red-300 rounded-lg transition-colors'
 const btnCancel =
-  'px-2.5 py-1.5 text-xs font-medium bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg transition-colors'
+  'px-2.5 py-1.5 text-xs font-medium bg-surface-input hover:bg-surface-hover text-ink-faint rounded-lg transition-colors'
 const btnConfirm =
   'px-2.5 py-1.5 text-xs font-medium bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white rounded-lg transition-colors'
 
@@ -159,19 +159,19 @@ export default function SubjectsManager({ subjects }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 py-10 px-4">
+    <div className="min-h-screen bg-surface-page py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Gestionar asignaturas</h1>
-            <p className="text-gray-500 text-sm mt-0.5">
+            <h1 className="text-2xl font-bold text-ink-strong">Gestionar asignaturas</h1>
+            <p className="text-ink-dim text-sm mt-0.5">
               {subjects.length} asignatura{subjects.length !== 1 ? 's' : ''} ·{' '}
               {subjects.reduce((n, s) => n + s.topics.length, 0)} temas
             </p>
           </div>
-          <a href="/admin" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
+          <a href="/admin" className="text-sm text-ink-dim hover:text-ink-muted transition-colors">
             ← Admin
           </a>
         </div>
@@ -184,8 +184,8 @@ export default function SubjectsManager({ subjects }: Props) {
         )}
 
         {/* ── Add subject ── */}
-        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 space-y-3">
-          <p className="text-sm font-semibold text-gray-300">Nueva asignatura</p>
+        <div className="bg-surface-card rounded-2xl border border-wire p-5 space-y-3">
+          <p className="text-sm font-semibold text-ink-muted">Nueva asignatura</p>
           <div className="flex gap-2">
             <input
               type="text"
@@ -204,13 +204,13 @@ export default function SubjectsManager({ subjects }: Props) {
 
         {/* ── Subjects list ── */}
         {subjects.length === 0 ? (
-          <div className="bg-gray-900 rounded-2xl border border-gray-800 p-12 text-center">
-            <p className="text-gray-500 text-sm">No hay asignaturas todavía.</p>
+          <div className="bg-surface-card rounded-2xl border border-wire p-12 text-center">
+            <p className="text-ink-dim text-sm">No hay asignaturas todavía.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {subjects.map(subject => (
-              <div key={subject.id} className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+              <div key={subject.id} className="bg-surface-card rounded-2xl border border-wire overflow-hidden">
 
                 {/* Subject header */}
                 <div className="px-5 py-4 flex items-start justify-between gap-4">
@@ -243,8 +243,8 @@ export default function SubjectsManager({ subjects }: Props) {
                     </div>
                   ) : (
                     <div className="min-w-0 flex-1">
-                      <span className="text-white font-semibold">{subject.name}</span>
-                      <span className="ml-2 text-xs text-gray-500">
+                      <span className="text-ink-strong font-semibold">{subject.name}</span>
+                      <span className="ml-2 text-xs text-ink-dim">
                         {subject.questionCount} pregunta{subject.questionCount !== 1 ? 's' : ''}
                       </span>
                     </div>
@@ -289,7 +289,7 @@ export default function SubjectsManager({ subjects }: Props) {
 
                 {/* Topics */}
                 {subject.topics.length > 0 && (
-                  <div className="border-t border-gray-800 divide-y divide-gray-800/60">
+                  <div className="border-t border-wire divide-y divide-wire/60">
                     {subject.topics.map(topic => (
                       <div key={topic.id} className="px-5 py-3 pl-8 flex items-start justify-between gap-4">
                         {editTopicId === topic.id ? (
@@ -321,8 +321,8 @@ export default function SubjectsManager({ subjects }: Props) {
                           </div>
                         ) : (
                           <div className="min-w-0 flex-1">
-                            <span className="text-gray-300 text-sm">{topic.name}</span>
-                            <span className="ml-2 text-xs text-gray-600">
+                            <span className="text-ink-muted text-sm">{topic.name}</span>
+                            <span className="ml-2 text-xs text-ink-ghost">
                               {topic.questionCount} pregunta{topic.questionCount !== 1 ? 's' : ''}
                             </span>
                           </div>
@@ -369,7 +369,7 @@ export default function SubjectsManager({ subjects }: Props) {
                 )}
 
                 {/* Add topic row */}
-                <div className="border-t border-gray-800 px-5 py-3 pl-8">
+                <div className="border-t border-wire px-5 py-3 pl-8">
                   {openTopicForm === subject.id ? (
                     <div className="space-y-2">
                       <div className="flex gap-2">
