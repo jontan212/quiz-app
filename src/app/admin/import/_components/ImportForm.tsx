@@ -5,6 +5,7 @@ import {
   importQuestions,
   checkDuplicateStatements,
   checkDuplicateDetails,
+  checkNewSubjectsTopics,
   type ImportRow,
   type ExistingQuestion,
 } from '../actions'
@@ -162,6 +163,8 @@ export default function ImportForm() {
   const [isPending, startTransition] = useTransition()
 
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false)
+  const [newCatalog, setNewCatalog] = useState<{ newSubjects: string[]; newTopics: Array<{ subject: string; topic: string }> } | null>(null)
+  const [showOnlyFlagged, setShowOnlyFlagged] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [undoStack, setUndoStack] = useState<DeleteBatch[]>([])
@@ -191,7 +194,8 @@ export default function ImportForm() {
   const flaggedCount = exactCount + conflictCount
   const toImportCount = validRows.length - flaggedCount
   const filteredValid = validRows.filter(r =>
-    !searchQuery || r.statement.toLowerCase().includes(searchQuery.toLowerCase())
+    (!searchQuery || r.statement.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (!showOnlyFlagged || r.duplicateLevel !== null)
   )
   const allFilteredSelected =
     filteredValid.length > 0 && filteredValid.every(r => selected.has(r.id))
@@ -210,6 +214,8 @@ export default function ImportForm() {
     setEditDraft(null)
     setShowNewForm(false)
     setCompareRow(null)
+    setNewCatalog(null)
+    setShowOnlyFlagged(false)
 
     const text = await file.text()
     const parsed = parseCSV(text)
@@ -219,12 +225,19 @@ export default function ImportForm() {
     const validParsed = parsed.filter(r => !r.parseError)
     if (validParsed.length > 0) {
       setIsCheckingDuplicates(true)
-      const { matches } = await checkDuplicateDetails(
-        validParsed.map(r => ({ statement: r.statement, options: r.options, correctIndex: r.correctIndex })),
-      )
-      // Build lookup: statementLower → match
-      const matchMap = new Map(matches.map(m => [m.statementLower, m]))
 
+      // Ambas comprobaciones en paralelo
+      const [{ matches }, catalogResult] = await Promise.all([
+        checkDuplicateDetails(
+          validParsed.map(r => ({ statement: r.statement, options: r.options, correctIndex: r.correctIndex })),
+        ),
+        checkNewSubjectsTopics(
+          validParsed.map(r => ({ subject: r.subject, topic: r.topic })),
+        ),
+      ])
+
+      // Actualizar niveles de duplicado
+      const matchMap = new Map(matches.map(m => [m.statementLower, m]))
       setAllRows(prev =>
         prev.map(r => {
           if (r.parseError) return r
@@ -234,6 +247,13 @@ export default function ImportForm() {
             : { ...r, duplicateLevel: null, existingMatches: [] }
         }),
       )
+
+      // Guardar catálogo nuevo (solo si hay algo)
+      if (!catalogResult.error &&
+          (catalogResult.newSubjects.length > 0 || catalogResult.newTopics.length > 0)) {
+        setNewCatalog(catalogResult)
+      }
+
       setIsCheckingDuplicates(false)
     }
   }
@@ -265,6 +285,7 @@ export default function ImportForm() {
       return s
     })
     setUndoStack(prev => [...prev.slice(-9), toDelete])
+    setShowOnlyFlagged(false)
   }
 
   function undo() {
@@ -395,6 +416,8 @@ export default function ImportForm() {
         setSelected(new Set())
         setUndoStack([])
         setCompareRow(null)
+        setNewCatalog(null)
+        setShowOnlyFlagged(false)
       }
     })
   }
@@ -480,6 +503,31 @@ export default function ImportForm() {
       {importError && (
         <div className="px-4 py-3 rounded-xl border bg-red-900/30 border-red-700/50 text-red-300 text-sm">
           Error: {importError}
+        </div>
+      )}
+
+      {/* New subjects/topics notice */}
+      {newCatalog && (newCatalog.newSubjects.length > 0 || newCatalog.newTopics.length > 0) && (
+        <div className="bg-blue-950/20 border border-blue-800/40 rounded-xl p-4 space-y-2">
+          <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">
+            Se crearán al importar
+          </p>
+          {newCatalog.newSubjects.length > 0 && (
+            <p className="text-xs text-ink-muted">
+              <span className="text-ink-dim font-medium">
+                {newCatalog.newSubjects.length === 1 ? 'Asignatura nueva:' : 'Asignaturas nuevas:'}
+              </span>
+              {' '}{newCatalog.newSubjects.join(', ')}
+            </p>
+          )}
+          {newCatalog.newTopics.length > 0 && (
+            <p className="text-xs text-ink-muted">
+              <span className="text-ink-dim font-medium">
+                {newCatalog.newTopics.length === 1 ? 'Tema nuevo:' : 'Temas nuevos:'}
+              </span>
+              {' '}{newCatalog.newTopics.map(t => `${t.topic} (${t.subject})`).join(', ')}
+            </p>
+          )}
         </div>
       )}
 
@@ -659,10 +707,22 @@ export default function ImportForm() {
               )}
               {flaggedCount > 0 && (
                 <button
+                  onClick={() => setShowOnlyFlagged(v => !v)}
+                  className={`px-3 py-2 rounded-lg border text-sm transition-colors whitespace-nowrap ${
+                    showOnlyFlagged
+                      ? 'bg-amber-900/40 border-amber-700/50 text-amber-400'
+                      : 'bg-surface-input border-wire text-ink-dim hover:text-ink-muted'
+                  }`}
+                >
+                  {showOnlyFlagged ? `Marcadas (${flaggedCount}) ✕` : `Ver marcadas (${flaggedCount})`}
+                </button>
+              )}
+              {flaggedCount > 0 && (
+                <button
                   onClick={deleteAllFlagged}
                   className="px-3 py-2 bg-orange-900/30 hover:bg-orange-900/50 border border-orange-800/50 text-orange-400 text-sm rounded-lg transition-colors whitespace-nowrap"
                 >
-                  Eliminar duplicadas ({flaggedCount})
+                  Eliminar todas
                 </button>
               )}
               {undoStack.length > 0 && (

@@ -46,7 +46,7 @@ export default function DuplicateCompareModal({
             <p className="text-xs text-ink-dim">
               {isExact
                 ? 'Esta pregunta ya existe con las mismas opciones y la misma respuesta correcta.'
-                : 'El enunciado ya existe pero con opciones de respuesta o respuesta correcta diferente.'}
+                : 'El enunciado ya existe pero con opciones de respuestas diferentes.'}
             </p>
           </div>
           <button

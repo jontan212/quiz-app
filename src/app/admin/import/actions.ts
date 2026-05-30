@@ -210,3 +210,64 @@ export async function checkDuplicateDetails(
 
   return { matches: results }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Detectar asignaturas y temas nuevos (no existen aún en BD)
+// ─────────────────────────────────────────────────────────────
+
+export async function checkNewSubjectsTopics(
+  rows: Array<{ subject: string; topic: string }>,
+): Promise<{
+  newSubjects: string[]
+  newTopics: Array<{ subject: string; topic: string }>
+  error?: string
+}> {
+  const cookieStore = await cookies()
+  if (cookieStore.get('admin_session')?.value !== 'true') {
+    return { newSubjects: [], newTopics: [], error: 'No autorizado' }
+  }
+  if (rows.length === 0) return { newSubjects: [], newTopics: [] }
+
+  const supabase = createAdminClient()
+  const [{ data: subjectsData }, { data: topicsData }] = await Promise.all([
+    supabase.from('subjects').select('id, name'),
+    supabase.from('topics').select('subject_id, name'),
+  ])
+
+  // id → name (lowercase) para hacer join con topics
+  const subjectById = new Map(
+    (subjectsData ?? []).map(s => [s.id, s.name.toLowerCase()])
+  )
+  // name (lowercase) → exists
+  const existingSubjectNames = new Set(
+    (subjectsData ?? []).map(s => s.name.toLowerCase())
+  )
+  // "subjectName:topicName" (lowercase) → exists
+  const existingTopicKeys = new Set(
+    (topicsData ?? []).map(t => `${subjectById.get(t.subject_id) ?? ''}:${t.name.toLowerCase()}`)
+  )
+
+  // Asignaturas nuevas (deduplicadas, case-insensitive)
+  const seenSubjects = new Set<string>()
+  const newSubjects: string[] = []
+  for (const row of rows) {
+    const lower = row.subject.toLowerCase()
+    if (!existingSubjectNames.has(lower) && !seenSubjects.has(lower)) {
+      seenSubjects.add(lower)
+      newSubjects.push(row.subject)
+    }
+  }
+
+  // Temas nuevos (deduplicados, case-insensitive)
+  const seenTopics = new Set<string>()
+  const newTopics: Array<{ subject: string; topic: string }> = []
+  for (const row of rows) {
+    const key = `${row.subject.toLowerCase()}:${row.topic.toLowerCase()}`
+    if (!existingTopicKeys.has(key) && !seenTopics.has(key)) {
+      seenTopics.add(key)
+      newTopics.push({ subject: row.subject, topic: row.topic })
+    }
+  }
+
+  return { newSubjects, newTopics }
+}
