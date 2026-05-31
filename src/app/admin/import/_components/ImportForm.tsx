@@ -311,6 +311,18 @@ export default function ImportForm() {
     setShowOnlyFlagged(false)
   }
 
+  function deleteAllExact() {
+    const toDelete = allRows.filter(r => r.duplicateLevel === 'exact')
+    if (toDelete.length === 0) return
+    setAllRows(prev => prev.filter(r => r.duplicateLevel !== 'exact'))
+    setSelected(prev => {
+      const s = new Set(prev)
+      toDelete.forEach(r => s.delete(r.id))
+      return s
+    })
+    setUndoStack(prev => [...prev.slice(-9), toDelete])
+  }
+
   function undo() {
     const batch = undoStack[undoStack.length - 1]
     if (!batch) return
@@ -793,6 +805,15 @@ export default function ImportForm() {
                   }`}
                 >
                   {showOnlyFlagged ? `Marcadas (${flaggedCount}) ✕` : `Ver marcadas (${flaggedCount})`}
+                </button>
+              )}
+              {exactCount > 0 && (
+                <button
+                  onClick={deleteAllExact}
+                  title="Eliminar solo los duplicados exactos"
+                  className="px-3 py-2 bg-red-900/30 hover:bg-red-900/50 border border-red-800/50 text-red-400 text-sm rounded-lg transition-colors whitespace-nowrap"
+                >
+                  Eliminar exactos ({exactCount})
                 </button>
               )}
               {flaggedCount > 0 && (
