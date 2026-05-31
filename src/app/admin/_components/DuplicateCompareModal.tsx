@@ -1,5 +1,7 @@
 'use client'
 
+import { normalizeText } from '@/lib/normalize'
+
 export type CompareQuestion = {
   statement: string
   options: Array<{ text: string; isCorrect: boolean }>
@@ -98,7 +100,7 @@ function QuestionCard({
   highlightDiff?: CompareQuestion
 }) {
   const incomingTexts = highlightDiff
-    ? new Set(highlightDiff.options.map(o => o.text.trim().toLowerCase()))
+    ? new Set(highlightDiff.options.map(o => normalizeText(o.text)))
     : null
 
   return (
@@ -118,7 +120,7 @@ function QuestionCard({
       <div className="flex flex-col gap-1.5">
         {question.options.map((opt, i) => {
           // Highlight option if its text doesn't appear in the incoming options
-          const isDifferent = incomingTexts !== null && !incomingTexts.has(opt.text.trim().toLowerCase())
+          const isDifferent = incomingTexts !== null && !incomingTexts.has(normalizeText(opt.text))
           return (
             <span
               key={i}

@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { normalizeText } from '@/lib/normalize'
 
 export type ImportRow = {
   subject: string
@@ -109,8 +110,8 @@ export async function checkDuplicateStatements(
 
   if (error) return { duplicates: [], error: error.message }
 
-  const existingLower = new Set((data ?? []).map((q) => q.statement.toLowerCase()))
-  const duplicates = statements.filter((s) => existingLower.has(s.toLowerCase()))
+  const existingLower = new Set((data ?? []).map((q) => normalizeText(q.statement)))
+  const duplicates = statements.filter((s) => existingLower.has(normalizeText(s)))
 
   return { duplicates }
 }
@@ -135,7 +136,7 @@ type DbOption = { text: string | null; is_correct: boolean; position: number }
 type DbQuestion = { id: string; statement: string; question_options: DbOption[] }
 
 function sortedTexts(texts: string[]): string {
-  return texts.map(t => t.trim().toLowerCase()).sort().join('\0')
+  return texts.map(normalizeText).sort().join('\0')
 }
 
 function optsKey(opts: DbOption[]): string {
@@ -151,7 +152,7 @@ function incomingOptsKey(options: string[]): string {
 }
 
 function incomingCorrectKey(options: string[], correctIndex: number): string {
-  return (options[correctIndex] ?? '').trim().toLowerCase()
+  return normalizeText(options[correctIndex] ?? '')
 }
 
 export async function checkDuplicateDetails(
@@ -170,10 +171,10 @@ export async function checkDuplicateDetails(
 
   if (error) return { matches: [], error: error.message }
 
-  // Group existing by lowercased statement
+  // Group existing by normalized statement
   const byStmt = new Map<string, DbQuestion[]>()
   for (const q of (data ?? []) as DbQuestion[]) {
-    const key = q.statement.toLowerCase()
+    const key = normalizeText(q.statement)
     const arr = byStmt.get(key) ?? []
     arr.push(q)
     byStmt.set(key, arr)
@@ -182,7 +183,7 @@ export async function checkDuplicateDetails(
   const results: DuplicateMatch[] = []
 
   for (const row of incoming) {
-    const key = row.statement.toLowerCase()
+    const key = normalizeText(row.statement)
     const matches = byStmt.get(key)
     if (!matches || matches.length === 0) continue
 

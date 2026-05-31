@@ -26,7 +26,8 @@
       "PowerShell(Remove-Item *)",
       "PowerShell(node _verify_storage.cjs)",
       "PowerShell(git branch *)",
-      "PowerShell(git push *)"
+      "PowerShell(git push *)",
+      "PowerShell(node _verify_norm.cjs)"
     ]
   }
 }

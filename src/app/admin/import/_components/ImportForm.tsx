@@ -13,6 +13,7 @@ import DuplicateCompareModal, { type CompareQuestion } from '@/app/admin/_compon
 import ImagePicker from '@/app/admin/_components/ImagePicker'
 import AutoGrowTextarea from '@/app/admin/_components/AutoGrowTextarea'
 import { uploadQuestionImage } from '@/lib/supabase/storage'
+import { normalizeText } from '@/lib/normalize'
 
 const SAMPLE_CSV = `asignatura,tema,enunciado,opcion1,opcion2,opcion3,opcion4,correcta
 Ejemplo,Tema 1,¿Cuál es la capital de España?,Madrid,Barcelona,Sevilla,Valencia,1
@@ -264,7 +265,7 @@ export default function ImportForm() {
       setAllRows(prev =>
         prev.map(r => {
           if (r.parseError) return r
-          const m = matchMap.get(r.statement.toLowerCase())
+          const m = matchMap.get(normalizeText(r.statement))
           return m
             ? { ...r, duplicateLevel: m.level, existingMatches: m.existing }
             : { ...r, duplicateLevel: null, existingMatches: [] }
