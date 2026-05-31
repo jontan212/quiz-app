@@ -27,8 +27,6 @@ export default async function ResultsPage({
       })
     : []
 
-  console.log('[results] decoded', answerDetails.length, 'answer details from URL')
-
   if (!subject || total <= 0 || isNaN(correct) || correct < 0 || correct > total) {
     return (
       <div className="min-h-screen bg-surface-page flex items-center justify-center px-4">
@@ -49,7 +47,6 @@ export default async function ResultsPage({
   let saveError: string | undefined
   let sessionId: string | undefined
   if (mode === 'personal') {
-    console.log('[results] calling saveSession with', answerDetails.length, 'answers')
     const result = await saveSession({
       subject,
       topics,
@@ -59,8 +56,6 @@ export default async function ResultsPage({
     })
     saveError = result.error
     sessionId = result.sessionId
-    if (result.error) console.error('[results] saveSession error:', result.error)
-    else console.log('[results] session saved, id:', sessionId)
   }
 
   // Cargar historial reciente (incluye la sesión recién guardada)

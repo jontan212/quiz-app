@@ -7,7 +7,26 @@
       "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(item[''''text'''']\\) for item in data if item[''''type'''']==''''text'''']\")",
       "Bash(grep -v \"^$\")",
       "Bash(npx next:*)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(npx playwright *)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(ip route *)",
+      "Bash(findstr /i \"edit import question pregunta\")",
+      "PowerShell(npx tsc --noEmit -p tsconfig.json)",
+      "PowerShell(npx eslint src/app/admin/import/_components/ImportForm.tsx src/app/admin/import/actions.ts)",
+      "PowerShell(npx eslint src/app/admin/_components/AutoGrowTextarea.tsx)",
+      "PowerShell(npm install *)",
+      "PowerShell(npm run *)",
+      "PowerShell(npx playwright install chromium 2>&1 | Select-Object -Last 8)",
+      "PowerShell(node _verify_tmp.cjs)",
+      "PowerShell(node _verify_probe.cjs)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(node _verify_del.cjs)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(node _verify_storage.cjs)",
+      "PowerShell(git branch *)",
+      "PowerShell(git push *)"
     ]
   }
 }
