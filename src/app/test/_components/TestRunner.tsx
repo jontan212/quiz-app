@@ -337,7 +337,7 @@ export default function TestRunner({ questions: initialQuestions, mode, testMode
   // ── Option button style ──
   function optionStyle(optionId: string, isCorrect: boolean): string {
     const base =
-      'w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium transition-all border-2 focus:outline-none'
+      'w-full text-left px-4 py-3.5 rounded-xl text-sm font-medium transition-all border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70'
     if (!revealed || testMode === 'exam') {
       return selectedOption === optionId
         ? `${base} bg-blue-600/20 border-blue-500 text-blue-300`

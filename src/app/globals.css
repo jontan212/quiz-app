@@ -18,6 +18,8 @@
   --ink-faint:     #6b7280;
   --ink-dim:       #9ca3af;
   --ink-ghost:     #d1d5db;
+  /* Foco de teclado */
+  --focus-ring:    #2563eb;
 }
 
 .dark {
@@ -36,6 +38,8 @@
   --ink-faint:     #9ca3af;
   --ink-dim:       #6b7280;
   --ink-ghost:     #4b5563;
+  /* Foco de teclado */
+  --focus-ring:    #60a5fa;
 }
 
 @theme inline {
@@ -59,4 +63,15 @@ body {
   background-color: var(--surface-page);
   color: var(--ink-strong);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ── Foco de teclado accesible (global) ─────────────────────── */
+/* Solo aparece al navegar con teclado (:focus-visible), no con ratón.
+   Los elementos con su propio anillo (focus:ring) lo conservan. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  /* `transition-colors` de Tailwind incluye outline-color; lo excluimos aquí
+     para que el anillo aparezca en azul al instante, sin parpadeo de color. */
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter;
 }

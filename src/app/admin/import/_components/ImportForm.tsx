@@ -15,6 +15,31 @@ import AutoGrowTextarea from '@/app/admin/_components/AutoGrowTextarea'
 import { uploadQuestionImage } from '@/lib/supabase/storage'
 import { normalizeText } from '@/lib/normalize'
 
+// ── Iconos (trazo coherente con los de las filas) ──────────────
+// suppressHydrationWarning: extensiones (p. ej. Dark Reader) inyectan atributos
+// en los <svg> antes de hidratar y provocan un falso mismatch de hidratación.
+function TrashIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true" suppressHydrationWarning>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  )
+}
+function FilterIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true" suppressHydrationWarning>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M6.75 12h10.5M10.5 17.25h3" />
+    </svg>
+  )
+}
+function UndoIcon({ className = 'w-3.5 h-3.5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true" suppressHydrationWarning>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+    </svg>
+  )
+}
+
 const SAMPLE_CSV = `asignatura,tema,enunciado,opcion1,opcion2,opcion3,opcion4,correcta
 Ejemplo,Tema 1,¿Cuál es la capital de España?,Madrid,Barcelona,Sevilla,Valencia,1
 Ejemplo,Tema 1,¿Cuántos lados tiene un triángulo?,2,3,4,5,2
@@ -786,51 +811,69 @@ export default function ImportForm() {
                 placeholder="Buscar por enunciado…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="flex-1 min-w-[200px] px-3 py-2 bg-surface-card border border-wire rounded-lg text-sm text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 min-w-[200px] px-3 py-2 bg-surface-card border border-wire rounded-lg text-sm text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500/60"
               />
+
               {selected.size > 0 && (
                 <button
                   onClick={deleteSelected}
-                  className="px-3 py-2 bg-red-900/40 hover:bg-red-900/60 border border-red-800/50 text-red-400 text-sm rounded-lg transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-900/40 hover:bg-red-900/60 border border-red-700/50 text-red-300 text-sm rounded-lg transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
                 >
+                  <TrashIcon />
                   Eliminar {selected.size} sel.
                 </button>
               )}
+
+              {/* Filtro */}
               {flaggedCount > 0 && (
                 <button
                   onClick={() => setShowOnlyFlagged(v => !v)}
-                  className={`px-3 py-2 rounded-lg border text-sm transition-colors whitespace-nowrap ${
+                  aria-pressed={showOnlyFlagged}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 ${
                     showOnlyFlagged
                       ? 'bg-amber-900/40 border-amber-700/50 text-amber-400'
                       : 'bg-surface-input border-wire text-ink-dim hover:text-ink-muted'
                   }`}
                 >
+                  <FilterIcon />
                   {showOnlyFlagged ? `Marcadas (${flaggedCount}) ✕` : `Ver marcadas (${flaggedCount})`}
                 </button>
               )}
+
+              {/* Separador antes del grupo destructivo */}
+              {flaggedCount > 0 && (
+                <span className="w-px h-6 bg-wire/70 mx-0.5 hidden sm:block" aria-hidden="true" />
+              )}
+
+              {/* Acciones destructivas (rojo coherente, jerarquía por intensidad) */}
               {exactCount > 0 && (
                 <button
                   onClick={deleteAllExact}
                   title="Eliminar solo los duplicados exactos"
-                  className="px-3 py-2 bg-red-900/30 hover:bg-red-900/50 border border-red-800/50 text-red-400 text-sm rounded-lg transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-900/20 hover:bg-red-900/40 border border-red-800/40 text-red-400 text-sm rounded-lg transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
                 >
-                  Eliminar exactos ({exactCount})
+                  <TrashIcon />
+                  Exactos ({exactCount})
                 </button>
               )}
               {flaggedCount > 0 && (
                 <button
                   onClick={deleteAllFlagged}
-                  className="px-3 py-2 bg-orange-900/30 hover:bg-orange-900/50 border border-orange-800/50 text-orange-400 text-sm rounded-lg transition-colors whitespace-nowrap"
+                  title="Eliminar todas las marcadas (exactos y conflictos)"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-900/40 hover:bg-red-900/60 border border-red-700/50 text-red-300 text-sm rounded-lg transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
                 >
-                  Eliminar todas
+                  <TrashIcon />
+                  Todas ({flaggedCount})
                 </button>
               )}
+
               {undoStack.length > 0 && (
                 <button
                   onClick={undo}
-                  className="px-3 py-2 bg-surface-input hover:bg-surface-hover border border-wire text-ink-muted text-sm rounded-lg transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-input hover:bg-surface-hover border border-wire text-ink-muted text-sm rounded-lg transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40"
                 >
-                  ↩ Deshacer
+                  <UndoIcon />
+                  Deshacer
                 </button>
               )}
             </div>

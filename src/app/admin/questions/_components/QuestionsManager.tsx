@@ -11,6 +11,27 @@ type SortDir = 'asc' | 'desc'
 
 const PAGE_SIZES = [10, 20, 30, 50, 100]
 
+// ── Iconos (trazo coherente con el resto de la app) ───────────
+const ICON = {
+  edit: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+  trash: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
+  download: 'M12 3v12m0 0l-4-4m4 4l4-4M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2',
+  chevronL: 'M15 19l-7-7 7-7',
+  chevronR: 'M9 5l7 7-7 7',
+  chevronsL: 'M11 19l-7-7 7-7M18 19l-7-7 7-7',
+  chevronsR: 'M13 5l7 7-7 7M6 5l7 7-7 7',
+}
+
+function Icon({ d, className = 'w-3.5 h-3.5' }: { d: string; className?: string }) {
+  return (
+    // suppressHydrationWarning: extensiones (p. ej. Dark Reader) inyectan
+    // atributos en los <svg> antes de hidratar y provocan un falso mismatch.
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true" suppressHydrationWarning>
+      <path strokeLinecap="round" strokeLinejoin="round" d={d} />
+    </svg>
+  )
+}
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('es-ES', {
     day: '2-digit', month: '2-digit', year: '2-digit',
@@ -388,14 +409,16 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
             </span>
             <button
               onClick={exportCSV}
-              className="px-3 py-1.5 bg-surface-input hover:bg-surface-hover border border-wire text-ink-muted text-xs rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-input hover:bg-surface-hover border border-wire text-ink-muted text-xs rounded-lg transition-colors"
             >
+              <Icon d={ICON.download} className="w-3.5 h-3.5" />
               Exportar CSV
             </button>
             <button
               onClick={() => setConfirmBulkDelete(true)}
-              className="px-3 py-1.5 bg-red-900/40 hover:bg-red-900/60 border border-red-800/50 text-red-400 text-xs rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-900/40 hover:bg-red-900/60 border border-red-800/50 text-red-400 text-xs rounded-lg transition-colors"
             >
+              <Icon d={ICON.trash} className="w-3.5 h-3.5" />
               Eliminar seleccionadas
             </button>
             <button
@@ -578,8 +601,9 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                             <div className="flex items-center gap-1.5 justify-end">
                               <a
                                 href={`/admin/questions/${q.id}/edit`}
-                                className="px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-ink-muted rounded-lg transition-colors"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-ink-muted rounded-lg transition-colors"
                               >
+                                <Icon d={ICON.edit} className="w-3.5 h-3.5" />
                                 Editar
                               </a>
                               {confirmSingleId === q.id ? (
@@ -602,8 +626,9 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                               ) : (
                                 <button
                                   onClick={() => setConfirmSingleId(q.id)}
-                                  className="px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-red-400 hover:text-red-300 rounded-lg transition-colors"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-red-400 hover:text-red-300 rounded-lg transition-colors"
                                 >
+                                  <Icon d={ICON.trash} className="w-3.5 h-3.5" />
                                   Eliminar
                                 </button>
                               )}
@@ -677,16 +702,18 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                 <button
                   onClick={() => setPage(1)}
                   disabled={safePage === 1}
-                  className="px-2 py-1.5 text-xs text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label="Primera página"
+                  className="px-2 py-1.5 text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  «
+                  <Icon d={ICON.chevronsL} className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={safePage === 1}
-                  className="px-2 py-1.5 text-xs text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label="Página anterior"
+                  className="px-2 py-1.5 text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  ‹
+                  <Icon d={ICON.chevronL} className="w-4 h-4" />
                 </button>
                 {pageList().map((p, idx) =>
                   p === '...'
@@ -708,16 +735,18 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
-                  className="px-2 py-1.5 text-xs text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label="Página siguiente"
+                  className="px-2 py-1.5 text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  ›
+                  <Icon d={ICON.chevronR} className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setPage(totalPages)}
                   disabled={safePage === totalPages}
-                  className="px-2 py-1.5 text-xs text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label="Última página"
+                  className="px-2 py-1.5 text-ink-faint hover:text-ink disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  »
+                  <Icon d={ICON.chevronsR} className="w-4 h-4" />
                 </button>
               </div>
             </div>
