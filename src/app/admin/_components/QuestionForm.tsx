@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createQuestion, checkStatementDuplicate } from '../actions'
 import { uploadQuestionImage } from '@/lib/supabase/storage'
 import ImagePicker from './ImagePicker'
+import AutoGrowTextarea from './AutoGrowTextarea'
 import type { Subject, Topic } from '@/lib/types'
 
 // ─── Types ────────────────────────────────────────────────────
@@ -281,12 +282,12 @@ export default function QuestionForm({ subjects, topics }: Props) {
               <label className="block text-sm font-medium text-ink-muted mb-1.5">
                 Enunciado <span className="text-red-400">*</span>
               </label>
-              <textarea
+              <AutoGrowTextarea
                 value={statement}
                 onChange={e => { setStatement(e.target.value); setDuplicateInDb(false); setDuplicateInQueue(false) }}
                 onBlur={handleStatementBlur}
-                rows={3}
-                className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                minRows={3}
+                className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Escribe el enunciado de la pregunta…"
               />
               {isCheckingDuplicate && (
@@ -413,11 +414,11 @@ export default function QuestionForm({ subjects, topics }: Props) {
               <label className="block text-sm font-medium text-ink-muted mb-1.5">
                 Explicación <span className="text-ink-dim font-normal">(opcional)</span>
               </label>
-              <textarea
+              <AutoGrowTextarea
                 value={explanation}
                 onChange={e => setExplanation(e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                minRows={3}
+                className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Explica por qué esta es la respuesta correcta…"
               />
             </div>

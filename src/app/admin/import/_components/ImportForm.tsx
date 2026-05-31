@@ -10,6 +10,9 @@ import {
   type ExistingQuestion,
 } from '../actions'
 import DuplicateCompareModal, { type CompareQuestion } from '@/app/admin/_components/DuplicateCompareModal'
+import ImagePicker from '@/app/admin/_components/ImagePicker'
+import AutoGrowTextarea from '@/app/admin/_components/AutoGrowTextarea'
+import { uploadQuestionImage } from '@/lib/supabase/storage'
 
 const SAMPLE_CSV = `asignatura,tema,enunciado,opcion1,opcion2,opcion3,opcion4,correcta
 Ejemplo,Tema 1,¿Cuál es la capital de España?,Madrid,Barcelona,Sevilla,Valencia,1
@@ -18,18 +21,34 @@ Ejemplo,Tema 2,¿Qué gas respiramos principalmente?,Oxígeno,Nitrógeno,Dióxid
 
 type DuplicateLevel = 'exact' | 'conflict' | null
 
-type PreviewRow = ImportRow & {
+type PreviewRow = Omit<ImportRow, 'imageUrl' | 'optionImages'> & {
   id: string
   rowNumber?: number
   parseError?: string
   duplicateLevel: DuplicateLevel
   existingMatches: ExistingQuestion[]
+  // Imagen de la pregunta: URL pegada y/o archivo pendiente de subir.
+  imageUrl: string
+  imageFile: File | null
+  // Imagen por opción, paralelas a `options`.
+  optionImageUrls: string[]
+  optionImageFiles: (File | null)[]
 }
 
 type DeleteBatch = PreviewRow[]
 
 function uid() {
   return Math.random().toString(36).slice(2, 10)
+}
+
+// Campos de imagen vacíos para una fila con `optionCount` opciones.
+function emptyImageFields(optionCount: number) {
+  return {
+    imageUrl: '',
+    imageFile: null as File | null,
+    optionImageUrls: Array<string>(optionCount).fill(''),
+    optionImageFiles: Array<File | null>(optionCount).fill(null),
+  }
 }
 
 function detectSeparator(headerLine: string): ',' | ';' {
@@ -59,6 +78,7 @@ function parseCSV(text: string): PreviewRow[] {
         options: [], correctIndex: 0,
         duplicateLevel: null, existingMatches: [],
         parseError: `Solo ${numCols} columnas (mínimo 6)`,
+        ...emptyImageFields(0),
       })
       continue
     }
@@ -76,6 +96,7 @@ function parseCSV(text: string): PreviewRow[] {
         options, correctIndex: 0,
         duplicateLevel: null, existingMatches: [],
         parseError: 'Asignatura, tema o enunciado vacío',
+        ...emptyImageFields(options.length),
       })
       continue
     }
@@ -87,6 +108,7 @@ function parseCSV(text: string): PreviewRow[] {
         correctIndex: 0,
         duplicateLevel: null, existingMatches: [],
         parseError: `Columna "correcta" inválida: "${correctaRaw}" (opciones: 1–${options.length})`,
+        ...emptyImageFields(options.length),
       })
       continue
     }
@@ -95,6 +117,7 @@ function parseCSV(text: string): PreviewRow[] {
       id: uid(), rowNumber, subject, topic, statement, options,
       correctIndex: correctaNum - 1,
       duplicateLevel: null, existingMatches: [],
+      ...emptyImageFields(options.length),
     })
   }
 
@@ -347,7 +370,12 @@ export default function ImportForm() {
 
   function addDraftOption() {
     if (!editDraft) return
-    setEditDraft({ ...editDraft, options: [...editDraft.options, ''] })
+    setEditDraft({
+      ...editDraft,
+      options: [...editDraft.options, ''],
+      optionImageUrls: [...editDraft.optionImageUrls, ''],
+      optionImageFiles: [...editDraft.optionImageFiles, null],
+    })
   }
 
   function removeDraftOption(i: number) {
@@ -357,7 +385,29 @@ export default function ImportForm() {
       editDraft.correctIndex >= i
         ? Math.max(0, editDraft.correctIndex - 1)
         : editDraft.correctIndex
-    setEditDraft({ ...editDraft, options: opts, correctIndex: newCorrectIndex })
+    setEditDraft({
+      ...editDraft,
+      options: opts,
+      correctIndex: newCorrectIndex,
+      optionImageUrls: editDraft.optionImageUrls.filter((_, idx) => idx !== i),
+      optionImageFiles: editDraft.optionImageFiles.filter((_, idx) => idx !== i),
+    })
+  }
+
+  function updateDraftOptionImage(
+    i: number,
+    patch: { url?: string; file?: File | null },
+  ) {
+    // Actualización funcional: el ImagePicker llama a onUrlChange y onFileChange
+    // de forma consecutiva, así que cada cambio debe partir del estado más reciente.
+    setEditDraft(d => {
+      if (!d) return d
+      const urls = [...d.optionImageUrls]
+      const files = [...d.optionImageFiles]
+      if (patch.url !== undefined) urls[i] = patch.url
+      if (patch.file !== undefined) files[i] = patch.file
+      return { ...d, optionImageUrls: urls, optionImageFiles: files }
+    })
   }
 
   // ── New row form ───────────────────────────────────────────────
@@ -391,6 +441,7 @@ export default function ImportForm() {
       correctIndex: newCorrect,
       duplicateLevel: newIsDuplicate ? 'conflict' : null,
       existingMatches: [],
+      ...emptyImageFields(opts.length),
     }
     setAllRows(prev => [...prev, newRow])
     setShowNewForm(false)
@@ -401,11 +452,38 @@ export default function ImportForm() {
   function handleImport() {
     if (validRows.length === 0) return
     startTransition(async () => {
-      const res = await importQuestions(
-        validRows.map(({ subject, topic, statement, options, correctIndex }) => ({
-          subject, topic, statement, options, correctIndex,
-        })),
-      )
+      // Subir primero las imágenes pendientes (archivos) y resolver las URLs finales.
+      const payload: ImportRow[] = []
+      for (const row of validRows) {
+        let imageUrl = row.imageUrl
+        if (row.imageFile) {
+          const { url } = await uploadQuestionImage(row.imageFile)
+          if (url) imageUrl = url
+        }
+
+        const optionImages: (string | null)[] = []
+        for (let i = 0; i < row.options.length; i++) {
+          let optUrl = row.optionImageUrls[i] ?? ''
+          const optFile = row.optionImageFiles[i]
+          if (optFile) {
+            const { url } = await uploadQuestionImage(optFile)
+            if (url) optUrl = url
+          }
+          optionImages.push(optUrl || null)
+        }
+
+        payload.push({
+          subject: row.subject,
+          topic: row.topic,
+          statement: row.statement,
+          options: row.options,
+          correctIndex: row.correctIndex,
+          imageUrl: imageUrl || null,
+          optionImages,
+        })
+      }
+
+      const res = await importQuestions(payload)
       if (res.error) {
         setImportError(res.error)
       } else {
@@ -589,13 +667,13 @@ export default function ImportForm() {
               </div>
 
               <div>
-                <textarea
+                <AutoGrowTextarea
                   placeholder="Enunciado de la pregunta…"
                   value={newStmt}
                   onChange={e => { setNewStmt(e.target.value); setNewIsDuplicate(false) }}
                   onBlur={handleNewStmtBlur}
-                  rows={2}
-                  className="w-full px-3 py-2 bg-surface-input border border-wire rounded-lg text-ink-strong text-sm placeholder-ink-dim focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                  minRows={2}
+                  className="w-full px-3 py-2 bg-surface-input border border-wire rounded-lg text-ink-strong text-sm placeholder-ink-dim focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
                 {isCheckingNew && <p className="text-xs text-ink-dim mt-1">Comprobando duplicado…</p>}
                 {!isCheckingNew && newIsDuplicate && (
@@ -759,44 +837,66 @@ export default function ImportForm() {
                   {editingId === row.id && editDraft ? (
                     /* Edit mode */
                     <div className="space-y-3 bg-surface-card border border-blue-800/50 rounded-xl p-4">
-                      <textarea
+                      <AutoGrowTextarea
                         value={editDraft.statement}
                         onChange={e => setEditDraft({ ...editDraft, statement: e.target.value })}
-                        rows={2}
-                        className="w-full px-3 py-2 bg-surface-input border border-wire rounded-lg text-ink-strong text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                        minRows={2}
+                        className="w-full px-3 py-2 bg-surface-input border border-wire rounded-lg text-ink-strong text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
+
+                      {/* Imagen de la pregunta */}
+                      <ImagePicker
+                        label="Imagen de la pregunta"
+                        optional
+                        url={editDraft.imageUrl}
+                        file={editDraft.imageFile}
+                        onUrlChange={v => setEditDraft(d => d ? { ...d, imageUrl: v } : d)}
+                        onFileChange={f => setEditDraft(d => d ? { ...d, imageFile: f } : d)}
+                      />
+
                       <div className="space-y-1.5">
                         {editDraft.options.map((opt, oi) => (
                           <div
                             key={oi}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                            className={`px-3 py-2 rounded-lg border space-y-2 ${
                               editDraft.correctIndex === oi
                                 ? 'bg-green-950/40 border-green-800'
                                 : 'bg-surface-input border-wire'
                             }`}
                           >
-                            <input
-                              type="radio"
-                              name={`edit-correct-${row.id}`}
-                              checked={editDraft.correctIndex === oi}
-                              onChange={() => setEditDraft({ ...editDraft, correctIndex: oi })}
-                              className="accent-green-500 flex-shrink-0"
-                            />
-                            <input
-                              type="text"
-                              value={opt}
-                              onChange={e => updateDraftOption(oi, e.target.value)}
-                              className="flex-1 bg-transparent text-ink-strong text-sm focus:outline-none"
-                            />
-                            {editDraft.options.length > 2 && (
-                              <button
-                                type="button"
-                                onClick={() => removeDraftOption(oi)}
-                                className="text-ink-ghost hover:text-red-400 text-lg leading-none"
-                              >
-                                ×
-                              </button>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name={`edit-correct-${row.id}`}
+                                checked={editDraft.correctIndex === oi}
+                                onChange={() => setEditDraft({ ...editDraft, correctIndex: oi })}
+                                className="accent-green-500 flex-shrink-0"
+                              />
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={e => updateDraftOption(oi, e.target.value)}
+                                className="flex-1 bg-transparent text-ink-strong text-sm focus:outline-none"
+                              />
+                              {editDraft.options.length > 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeDraftOption(oi)}
+                                  className="text-ink-ghost hover:text-red-400 text-lg leading-none"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
+                            <div className="pl-6">
+                              <ImagePicker
+                                compact
+                                url={editDraft.optionImageUrls[oi] ?? ''}
+                                file={editDraft.optionImageFiles[oi] ?? null}
+                                onUrlChange={v => updateDraftOptionImage(oi, { url: v })}
+                                onFileChange={f => updateDraftOptionImage(oi, { file: f })}
+                              />
+                            </div>
                           </div>
                         ))}
                         <button
@@ -844,6 +944,14 @@ export default function ImportForm() {
                             level={row.duplicateLevel}
                             onClick={e => { e.stopPropagation(); setCompareRow(row) }}
                           />
+                          {(row.imageUrl || row.imageFile) && (
+                            <span
+                              title="La pregunta tiene imagen"
+                              className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full border border-blue-700/50 bg-blue-900/30 text-blue-400"
+                            >
+                              📷 imagen
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-ink-strong leading-snug">{row.statement}</p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -856,7 +964,9 @@ export default function ImportForm() {
                                   : 'bg-surface-input text-ink-faint'
                               }`}
                             >
-                              {oi === row.correctIndex ? '✓ ' : ''}{opt}
+                              {oi === row.correctIndex ? '✓ ' : ''}
+                              {(row.optionImageUrls[oi] || row.optionImageFiles[oi]) ? '📷 ' : ''}
+                              {opt}
                             </span>
                           ))}
                         </div>

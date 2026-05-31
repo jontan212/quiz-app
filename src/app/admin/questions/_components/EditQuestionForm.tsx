@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { updateQuestion } from '../actions'
 import { uploadQuestionImage } from '@/lib/supabase/storage'
 import ImagePicker from '../../_components/ImagePicker'
+import AutoGrowTextarea from '../../_components/AutoGrowTextarea'
 import type { QuestionWithOptions, Subject, Topic } from '@/lib/types'
 
 type OptionState = {
@@ -168,11 +169,11 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
             <label className="block text-sm font-medium text-ink-muted mb-1.5">
               Enunciado <span className="text-red-400">*</span>
             </label>
-            <textarea
+            <AutoGrowTextarea
               value={statement}
               onChange={e => setStatement(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              minRows={3}
+              className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
@@ -297,11 +298,11 @@ export default function EditQuestionForm({ question, subjects, topics }: Props) 
             <label className="block text-sm font-medium text-ink-muted mb-1.5">
               Explicación <span className="text-ink-dim font-normal">(opcional)</span>
             </label>
-            <textarea
+            <AutoGrowTextarea
               value={explanation}
               onChange={e => setExplanation(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              minRows={3}
+              className="w-full px-3 py-2.5 bg-surface-input border border-wire rounded-lg text-ink-strong placeholder-ink-dim focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Explica por qué esta es la respuesta correcta…"
             />
           </div>

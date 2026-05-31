@@ -10,6 +10,8 @@ export type ImportRow = {
   statement: string
   options: string[]
   correctIndex: number // 0-based
+  imageUrl?: string | null // imagen de la pregunta (opcional)
+  optionImages?: (string | null)[] // imagen por opción, paralelo a `options` (opcional)
 }
 
 export async function importQuestions(
@@ -62,7 +64,7 @@ export async function importQuestions(
       .from('questions')
       .insert({
         statement: row.statement,
-        image_url: null,
+        image_url: row.imageUrl ?? null,
         subject: row.subject,
         topic: row.topic,
       })
@@ -77,7 +79,7 @@ export async function importQuestions(
         row.options.map((text, i) => ({
           question_id: question.id,
           text,
-          image_url: null,
+          image_url: row.optionImages?.[i] ?? null,
           is_correct: i === row.correctIndex,
           position: i,
         })),
