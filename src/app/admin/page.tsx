@@ -22,9 +22,9 @@ export default async function AdminPage() {
   return (
     <div>
       <div className="bg-surface-card border-b border-wire">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm font-medium text-ink-faint">Panel de administración</span>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <a
               href="/admin/import"
               className="text-sm text-ink-faint hover:text-ink transition-colors font-medium"

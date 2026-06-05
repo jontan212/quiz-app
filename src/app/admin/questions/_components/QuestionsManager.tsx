@@ -339,7 +339,7 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
             <select
               value={subjectFilter}
               onChange={e => changeSubject(e.target.value)}
-              className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full sm:w-auto px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option value="">Todas las asignaturas</option>
               {subjects.map(s => <option key={s} value={s}>{s}</option>)}
@@ -349,26 +349,26 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
               value={topicFilter}
               onChange={e => changeTopic(e.target.value)}
               disabled={topics.length === 0}
-              className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+              className="w-full sm:w-auto px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
             >
               <option value="">Todos los temas</option>
               {topics.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
               <span className="text-xs text-ink-ghost">Desde</span>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={e => changeDateFrom(e.target.value)}
-                className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 min-w-0 sm:flex-none px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               <span className="text-xs text-ink-ghost">hasta</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={e => changeDateTo(e.target.value)}
-                className="px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 min-w-0 sm:flex-none px-3 py-2 bg-surface-input border border-wire rounded-lg text-sm text-ink focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
@@ -403,8 +403,8 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
 
         {/* Bulk action bar */}
         {selected.size > 0 && (
-          <div className="flex items-center gap-3 px-4 py-3 bg-blue-950/40 border border-blue-800/50 rounded-xl">
-            <span className="text-sm text-blue-300 font-medium flex-1">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 py-3 bg-blue-950/40 border border-blue-800/50 rounded-xl">
+            <span className="text-sm text-blue-300 font-medium flex-1 min-w-full sm:min-w-0">
               {selected.size} pregunta{selected.size !== 1 ? 's' : ''} seleccionada{selected.size !== 1 ? 's' : ''}
             </span>
             <button
@@ -464,7 +464,8 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
               <p className="text-ink-dim text-sm">No hay preguntas con los filtros seleccionados.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-wire text-left">
@@ -690,6 +691,135 @@ export default function QuestionsManager({ questions }: { questions: QuestionWit
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile card list */}
+            <ul className="md:hidden divide-y divide-wire/50">
+              {pageItems.map((q, i) => {
+                const dupInfo = dupMap.get(q.id)
+                const isExpanded = expandedIds.has(q.id)
+                const opts = [...q.question_options].sort((a, b) => a.position - b.position)
+                return (
+                  <li
+                    key={q.id}
+                    className={`p-4 transition-colors ${
+                      selected.has(q.id) ? 'bg-blue-950/20' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(q.id)}
+                        onChange={() => toggleSelect(q.id)}
+                        className="mt-1 w-4 h-4 accent-blue-500 cursor-pointer shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <button
+                          onClick={() => setExpandedIds(prev => {
+                            const s = new Set(prev)
+                            s.has(q.id) ? s.delete(q.id) : s.add(q.id)
+                            return s
+                          })}
+                          className="block w-full text-left"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-ink-ghost tabular-nums mt-0.5">
+                              {pageStart + i + 1}
+                            </span>
+                            <span className={`text-ink-strong text-sm leading-snug min-w-0 ${isExpanded ? '' : 'line-clamp-2'}`}>
+                              {q.statement}
+                            </span>
+                          </div>
+                        </button>
+
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className="text-xs px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded-md">
+                            {q.subject}
+                          </span>
+                          <span className="text-xs text-ink-faint">{q.topic}</span>
+                          <span className="text-xs text-ink-dim tabular-nums">{fmtDate(q.created_at)}</span>
+                          {dupInfo && (
+                            <button
+                              onClick={() => setComparingQId(q.id)}
+                              className={`text-xs px-1.5 py-0.5 rounded-full border font-medium transition-opacity hover:opacity-80 ${
+                                dupInfo.level === 'exact'
+                                  ? 'bg-red-900/40 border-red-700/50 text-red-400'
+                                  : 'bg-orange-900/40 border-orange-700/50 text-orange-400'
+                              }`}
+                            >
+                              {dupInfo.level === 'exact' ? 'Exacto' : 'Conflicto'}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Expanded detail */}
+                        {isExpanded && (
+                          <div className="space-y-3 mt-3">
+                            <div className="flex flex-wrap gap-2">
+                              {opts.map((opt, oi) => (
+                                <span
+                                  key={opt.id}
+                                  className={`text-xs px-3 py-1.5 rounded-lg border ${
+                                    opt.is_correct
+                                      ? 'bg-green-900/40 border-green-700/50 text-green-300'
+                                      : 'bg-surface-input border-wire/50 text-ink-faint'
+                                  }`}
+                                >
+                                  {opt.is_correct ? '✓ ' : ''}{opt.text ?? `Opción ${oi + 1}`}
+                                </span>
+                              ))}
+                            </div>
+                            {q.explanation && (
+                              <div className="text-xs text-ink-faint bg-surface-card/80 rounded-lg px-3 py-2 border border-wire">
+                                <span className="text-ink-ghost font-medium">Explicación: </span>
+                                {q.explanation}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1.5 mt-3">
+                          <a
+                            href={`/admin/questions/${q.id}/edit`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-ink-muted rounded-lg transition-colors"
+                          >
+                            <Icon d={ICON.edit} className="w-3.5 h-3.5" />
+                            Editar
+                          </a>
+                          {confirmSingleId === q.id ? (
+                            <>
+                              <button
+                                onClick={() => handleDeleteSingle(q.id)}
+                                disabled={isPending}
+                                className="px-2.5 py-1 text-xs font-medium bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white rounded-lg transition-colors"
+                              >
+                                {isPending ? '…' : '✓'}
+                              </button>
+                              <button
+                                onClick={() => setConfirmSingleId(null)}
+                                disabled={isPending}
+                                className="px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-ink-faint rounded-lg transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmSingleId(q.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-surface-input hover:bg-surface-hover text-red-400 hover:text-red-300 rounded-lg transition-colors"
+                            >
+                              <Icon d={ICON.trash} className="w-3.5 h-3.5" />
+                              Eliminar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+            </>
           )}
 
           {/* Pagination */}
