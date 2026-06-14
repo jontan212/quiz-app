@@ -16,3 +16,23 @@ export function normalizeText(value: string | null | undefined): string {
     .replace(/[.,;:]+$/u, '')  // quitar puntuación final
     .trim()
 }
+
+/**
+ * Forma canónica de un nombre de asignatura o tema.
+ * - recorta extremos y colapsa espacios internos
+ * - Title Case equivalente a INITCAP de Postgres (primera letra de cada
+ *   palabra en mayúscula, el resto en minúscula)
+ *
+ * Es la ÚNICA forma con la que se comparan y se escriben los nombres, para que
+ * la previsualización del import, el upsert y el índice UNIQUE de la BD usen el
+ * mismo criterio. Sin esto, "matemáticas" y "Matemáticas" crean duplicados:
+ * el preview (case-insensitive) los ve iguales pero el upsert (case-sensitive)
+ * inserta una segunda fila.
+ */
+export function canonicalizeName(value: string | null | undefined): string {
+  return (value ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_, sep, ch) => sep + ch.toUpperCase())
+}

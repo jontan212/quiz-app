@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { normalizeText } from '@/lib/normalize'
+import { normalizeText, canonicalizeName } from '@/lib/normalize'
 
 export type ImportRow = {
   subject: string
@@ -32,7 +32,8 @@ export async function importQuestions(
   // Cache: `${subjectId}:${topicName}` → topic id (not strictly needed but avoids redundant upserts)
   const topicCache = new Set<string>()
 
-  async function getOrCreateSubject(name: string): Promise<string | null> {
+  async function getOrCreateSubject(rawName: string): Promise<string | null> {
+    const name = canonicalizeName(rawName)
     if (subjectIdCache.has(name)) return subjectIdCache.get(name)!
     // Try upsert (insert or ignore duplicate)
     const { data, error } = await supabase
@@ -45,7 +46,8 @@ export async function importQuestions(
     return data.id
   }
 
-  async function getOrCreateTopic(subjectId: string, name: string): Promise<void> {
+  async function getOrCreateTopic(subjectId: string, rawName: string): Promise<void> {
+    const name = canonicalizeName(rawName)
     const key = `${subjectId}:${name}`
     if (topicCache.has(key)) return
     await supabase
@@ -55,7 +57,9 @@ export async function importQuestions(
   }
 
   for (const row of rows) {
-    // Ensure subject and topic exist
+    // Ensure subject and topic exist (forma canónica, igual que el catálogo)
+    const subjectName = canonicalizeName(row.subject)
+    const topicName = canonicalizeName(row.topic)
     const subjectId = await getOrCreateSubject(row.subject)
     if (subjectId) {
       await getOrCreateTopic(subjectId, row.topic)
@@ -66,8 +70,8 @@ export async function importQuestions(
       .insert({
         statement: row.statement,
         image_url: row.imageUrl ?? null,
-        subject: row.subject,
-        topic: row.topic,
+        subject: subjectName,
+        topic: topicName,
       })
       .select()
       .single()
@@ -237,38 +241,44 @@ export async function checkNewSubjectsTopics(
     supabase.from('topics').select('subject_id, name'),
   ])
 
-  // id → name (lowercase) para hacer join con topics
+  // El criterio debe coincidir EXACTAMENTE con el del upsert de importQuestions
+  // (canonicalizeName), o el preview diría "0 nuevas" mientras el import crea
+  // duplicados por mayúsculas/espacios.
+
+  // id → name canónico para hacer join con topics
   const subjectById = new Map(
-    (subjectsData ?? []).map(s => [s.id, s.name.toLowerCase()])
+    (subjectsData ?? []).map(s => [s.id, canonicalizeName(s.name)])
   )
-  // name (lowercase) → exists
+  // name canónico → exists
   const existingSubjectNames = new Set(
-    (subjectsData ?? []).map(s => s.name.toLowerCase())
+    (subjectsData ?? []).map(s => canonicalizeName(s.name))
   )
-  // "subjectName:topicName" (lowercase) → exists
+  // "subjectName:topicName" canónico → exists
   const existingTopicKeys = new Set(
-    (topicsData ?? []).map(t => `${subjectById.get(t.subject_id) ?? ''}:${t.name.toLowerCase()}`)
+    (topicsData ?? []).map(t => `${subjectById.get(t.subject_id) ?? ''}:${canonicalizeName(t.name)}`)
   )
 
-  // Asignaturas nuevas (deduplicadas, case-insensitive)
+  // Asignaturas nuevas (deduplicadas por forma canónica)
   const seenSubjects = new Set<string>()
   const newSubjects: string[] = []
   for (const row of rows) {
-    const lower = row.subject.toLowerCase()
-    if (!existingSubjectNames.has(lower) && !seenSubjects.has(lower)) {
-      seenSubjects.add(lower)
-      newSubjects.push(row.subject)
+    const canon = canonicalizeName(row.subject)
+    if (!existingSubjectNames.has(canon) && !seenSubjects.has(canon)) {
+      seenSubjects.add(canon)
+      newSubjects.push(canon)
     }
   }
 
-  // Temas nuevos (deduplicados, case-insensitive)
+  // Temas nuevos (deduplicados por forma canónica)
   const seenTopics = new Set<string>()
   const newTopics: Array<{ subject: string; topic: string }> = []
   for (const row of rows) {
-    const key = `${row.subject.toLowerCase()}:${row.topic.toLowerCase()}`
+    const canonSubject = canonicalizeName(row.subject)
+    const canonTopic = canonicalizeName(row.topic)
+    const key = `${canonSubject}:${canonTopic}`
     if (!existingTopicKeys.has(key) && !seenTopics.has(key)) {
       seenTopics.add(key)
-      newTopics.push({ subject: row.subject, topic: row.topic })
+      newTopics.push({ subject: canonSubject, topic: canonTopic })
     }
   }
 

@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { canonicalizeName } from '@/lib/normalize'
 
 async function requireAdmin(): Promise<{ error: string } | null> {
   const cookieStore = await cookies()
@@ -18,7 +19,7 @@ export async function addSubject(name: string): Promise<{ error?: string }> {
   if (!name.trim()) return { error: 'El nombre no puede estar vacío.' }
 
   const supabase = createAdminClient()
-  const { error } = await supabase.from('subjects').insert({ name: name.trim() })
+  const { error } = await supabase.from('subjects').insert({ name: canonicalizeName(name) })
   if (error) {
     return { error: error.code === '23505' ? 'Ya existe esa asignatura.' : error.message }
   }
@@ -36,7 +37,7 @@ export async function addTopic(subjectId: string, name: string): Promise<{ error
   const supabase = createAdminClient()
   const { error } = await supabase
     .from('topics')
-    .insert({ subject_id: subjectId, name: name.trim() })
+    .insert({ subject_id: subjectId, name: canonicalizeName(name) })
   if (error) {
     return { error: error.code === '23505' ? 'Ese tema ya existe en esta asignatura.' : error.message }
   }
@@ -61,7 +62,7 @@ export async function renameSubject(id: string, newName: string): Promise<{ erro
   if (!subject) return { error: 'Asignatura no encontrada.' }
 
   const oldName = subject.name
-  const trimmed = newName.trim()
+  const trimmed = canonicalizeName(newName)
 
   if (oldName === trimmed) return {}
 
@@ -96,7 +97,7 @@ export async function renameTopic(id: string, newName: string): Promise<{ error?
   if (!topic) return { error: 'Tema no encontrado.' }
 
   const oldName = topic.name
-  const trimmed = newName.trim()
+  const trimmed = canonicalizeName(newName)
   const subjectName = (topic.subjects as unknown as { name: string }[] )[0]?.name
 
   if (oldName === trimmed) return {}
